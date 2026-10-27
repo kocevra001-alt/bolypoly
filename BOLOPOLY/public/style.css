@@ -715,3 +715,26 @@ body[data-screen="join"] [data-scr]:not([data-scr~="join"]) { display: none !imp
 #joinSection .name-field { display: block; margin-bottom: 12px; }
 #joinSection input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font: inherit; background: #fff; }
 #joinCode { text-transform: uppercase; letter-spacing: .3em; text-align: center; font-weight: 800; }
+
+
+/* ---------- v0.5.1 : perspective en ligne ---------- */
+.you-badge { display: inline-flex; align-items: center; padding: 5px 11px; border-radius: 999px; background: var(--sand); font: 700 12.5px var(--body); white-space: nowrap; }
+.you-badge.hidden { display: none !important; }
+.you-badge.on { background: var(--green); color: #fff; animation: youpulse 1.6s ease-in-out infinite; }
+@keyframes youpulse { 50% { box-shadow: 0 0 0 5px rgba(13, 107, 67, .25); } }
+body.net-mine .board { box-shadow: inset 0 0 0 4px #3ddc84; }
+@media (max-width: 700px) { body.net #modeTag { display: none; } .you-badge { font-size: 11.5px; padding: 3px 8px; } }
+
+/* Pas mon tour : boutons grisés avec le nom de celui qui joue */
+body.net-wait #rollBtn, body.net-wait #endTurnBtn { position: relative; color: transparent !important; pointer-events: none; opacity: .6; }
+body.net-wait #rollBtn::after, body.net-wait #endTurnBtn::after { content: var(--wait-text); position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink); }
+body.net-wait .action-bar .ab-btn:not([data-bar="menu"]) { opacity: .35; pointer-events: none; }
+body.net-wait.net-host .action-bar .ab-btn[data-bar="menu"] { opacity: .35; pointer-events: none; }
+body.net-wait:not(.local-modal) .modal-body, body.net-wait:not(.local-modal) .modal-foot { pointer-events: none; }
+body.net-wait:not(.local-modal) .modal-foot { opacity: .4; }
+body.net-wait:not(.local-modal) .modal-head::after { content: var(--wait-text); display: block; margin-top: 6px; font-size: 13px; font-weight: 700; color: var(--orange-deep); }
+
+.board-topline .turn-timer { position: static; transform: none; z-index: auto; box-shadow: none; padding: 5px 10px; font-size: 12.5px; white-space: nowrap; }
+.board-topline .turn-timer.hurry { animation: youpulse .8s ease-in-out infinite; }
+@media (max-width: 700px) { .board-topline .turn-timer { padding: 3px 8px; font-size: 11.5px; } }
+@media (max-width: 700px) { body.net .board-topline { flex-wrap: wrap; row-gap: 4px; height: auto; } }

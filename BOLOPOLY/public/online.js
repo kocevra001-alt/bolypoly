@@ -128,7 +128,7 @@ document.addEventListener('click', (e) => {
     if (ONLINE.localModal && k === 'modal') return;
     if (e.target.closest('input,select,textarea,label')) return;
     e.preventDefault(); e.stopPropagation();
-    if (e.target.closest('[data-bar="menu"]')) { showToast('Le menu est réservé à l’hôte.'); return; }
+    if (e.target.closest('[data-bar="menu"]')) { guestMenu(); return; }
     if (controllerId() !== ONLINE.me) { showToast('Ce n’est pas ton tour.'); return; }
     if (k === 'board' && !state.actionMode) return;
     wsSend({ t: 'click', root: k, path: pathOf(rootEl(k), e.target) });
@@ -268,8 +268,77 @@ $('rulesTopBtn').addEventListener('click', () => {
     if (modalOpen()) { showToast('Termine d’abord la décision en cours.'); return; }
     ONLINE.localModal = true;
   }
-  $('rulesBtn').click();
+  if (ONLINE.role === 'guest') showRules(); else $('rulesBtn').click();
 });
 setInterval(() => {
   if (ONLINE.role === 'guest' && ONLINE.localModal && rootEl('modal').classList.contains('hidden')) { ONLINE.localModal = false; wsSend({ t: 'hello' }); }
 }, 400);
+
+
+/* ---------- Perspective : chacun voit clairement si c'est son tour ---------- */
+// Le badge vit dans .board-topline (toujours visible en jeu, jamais synchronisé avec l'invité).
+const youBadge = document.createElement('span');
+youBadge.id = 'youBadge'; youBadge.className = 'you-badge hidden';
+$('modeTag').after(youBadge);
+youBadge.after(chipEl);   // le chrono se range à côté du badge au lieu de le recouvrir
+
+let lastPersp = '';
+function paintPerspective() {
+  const b = document.body;
+  const live = !!ONLINE.role && (ONLINE.role === 'guest' || ONLINE.peer) && b.classList.contains('playing') && state.players.length > 0;
+  const cid = live ? controllerId() : -1;
+  const who = state.players[cid], me = state.players[ONLINE.me];
+  const sig = live ? [ONLINE.role, cid, state.over, !!ONLINE.localModal, who && who.name, me && me.name].join('|') : 'off';
+  if (sig === lastPersp) return;            // rien n'a changé : aucun travail DOM
+  lastPersp = sig;
+  if (!live) {
+    b.classList.remove('net', 'net-host', 'net-guest', 'net-mine', 'net-wait', 'local-modal');
+    youBadge.classList.add('hidden');
+    return;
+  }
+  const mine = cid === ONLINE.me && !state.over, wait = `⏳ Tour de ${who ? who.name : '…'}`;
+  b.classList.add('net');
+  b.classList.toggle('net-host', ONLINE.role === 'host');
+  b.classList.toggle('net-guest', ONLINE.role === 'guest');
+  b.classList.toggle('net-mine', mine);
+  b.classList.toggle('net-wait', !mine && !state.over);
+  b.classList.toggle('local-modal', !!ONLINE.localModal);
+  b.style.setProperty('--wait-text', JSON.stringify(wait));
+  youBadge.textContent = state.over ? '🏁 Partie terminée' : mine ? '🟢 À toi de jouer' : wait;
+  youBadge.title = `Tu joues : ${me ? me.name : ''}`;
+  youBadge.classList.toggle('on', mine);
+  youBadge.classList.remove('hidden');
+}
+// Déclenché par les événements du jeu (pas de sondage rapide) + filet de sécurité à 1 s.
+[['renderAll'], ['closeModal'], ['applySnap'], ['updateStart']].forEach(([n]) => {
+  const orig = window[n];
+  window[n] = function (...a) { const r = orig.apply(this, a); paintPerspective(); return r; };
+});
+const _ask = ask;
+ask = function (...a) { const r = _ask(...a); paintPerspective(); return r; };
+setInterval(paintPerspective, 1000);
+
+/* Menu de l'invité : règles et sortie seulement (nouvelle partie = hôte) */
+async function guestMenu() {
+  if (modalOpen()) { showToast('Termine d’abord la décision en cours.'); return; }
+  ONLINE.localModal = true;
+  const c = await ask({
+    eyebrow: 'MENU', title: 'BoloPoly',
+    body: '<p>Tu joues en ligne. Seul l’hôte peut lancer une nouvelle partie.</p>',
+    buttons: [
+      { label: 'Règles', value: 'rules', kind: 'secondary' },
+      { label: 'Quitter la partie', value: 'leave', kind: 'danger' },
+      { label: 'Fermer', value: 'close', kind: 'quiet' }
+    ]
+  });
+  if (c === 'rules') { showRules(); return; }
+  if (c === 'leave') {
+    ONLINE.localModal = true;
+    const ok = await ask({
+      eyebrow: 'QUITTER', title: 'Quitter la partie ?',
+      body: '<p>L’hôte sera prévenu. Tu pourras revenir avec le même code.</p>',
+      buttons: [{ label: 'Quitter', value: true, kind: 'danger' }, { label: 'Rester', value: false, kind: 'quiet' }]
+    });
+    if (ok) location.href = location.pathname;
+  }
+}

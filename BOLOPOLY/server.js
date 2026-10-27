@@ -12,7 +12,7 @@ const server = http.createServer((req, res) => {
   if (!f.startsWith(ROOT)) { res.writeHead(403); return res.end(); }
   fs.readFile(f, (err, data) => {
     if (err) { res.writeHead(404); return res.end('Introuvable'); }
-    res.writeHead(200, { 'Content-Type': MIME[path.extname(f)] || 'application/octet-stream' });
+    res.writeHead(200, { 'Content-Type': MIME[path.extname(f)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
     res.end(data);
   });
 });
