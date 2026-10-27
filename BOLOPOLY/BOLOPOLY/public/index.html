@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0d6b43" />
+  <title>BoloPoly v0.5</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="data.js" defer></script>
+  <script src="script.js" defer></script>
+  <script src="online.js" defer></script>
+</head>
+<body data-screen="home">
+  <div class="pagne" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="BoloPoly">
+      <span class="brand-mark">B</span>
+      <span><strong>BoloPoly</strong><small>Le Monopoly à l’ivoirienne</small></span>
+    </a>
+    <div class="topbar-right">
+      <button id="rulesBtn" class="btn mini quiet" type="button">Règles</button>
+      <span class="version">v0.5</span>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section id="heroSection" class="hero" data-scr="home">
+      <div>
+        <h1>Marchande.<br />Cotise.<br />Construis.</h1>
+        <p class="hero-copy">D’Adjamé au Plateau, bâtis ton patrimoine à coups de marchandage, de tontine et de gbaka. Tes adversaires ont le même plan.</p>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="round-stamp"><span>FCFA</span><strong>BOLO</strong><small>2 à 4 joueurs</small></div>
+      </div>
+    </section>
+
+    <section id="homeSection" class="home-actions" data-scr="home">
+      <article class="home-card main">
+        <h2>Créer une partie</h2>
+        <p>Choisis les joueurs, puis joue sur le même écran ou en ligne avec un ami.</p>
+        <button id="createBtn" class="btn primary big" type="button">Créer une partie</button>
+      </article>
+      <article class="home-card">
+        <h2>Rejoindre une partie</h2>
+        <p>Ton ami t’a donné un code à 4 lettres ou un lien ? C’est ici.</p>
+        <button id="joinGoBtn" class="btn secondary big" type="button">Rejoindre une partie</button>
+      </article>
+    </section>
+
+    <section id="joinSection" class="setup panel" data-scr="join">
+      <button id="backHome2" class="btn mini quiet" type="button">← Retour</button>
+      <div class="section-heading"><h2>Rejoindre la partie</h2></div>
+      <div id="joinForm">
+        <label class="name-field"><span>Code de la partie</span><input id="joinCode" maxlength="4" placeholder="ABCD" autocomplete="off" /></label>
+        <label class="name-field"><span>Ton nom</span><input id="joinName" maxlength="14" placeholder="Ton nom" autocomplete="off" /></label>
+        <div id="joinChars" class="char-grid" role="radiogroup" aria-label="Ton personnage"></div>
+        <p id="joinPower" class="char-power"></p>
+        <button id="joinBtn" class="btn primary big" type="button">Rejoindre</button>
+      </div>
+      <p id="joinStatus" class="lobby-status" aria-live="polite"></p>
+    </section>
+
+    <section id="setupSection" class="setup panel" data-scr="setup">
+      <div class="setup-top"><button id="backHome" class="btn mini quiet" type="button">← Retour</button></div>
+      <div class="mode-switch" role="group" aria-label="Mode de jeu">
+        <button id="modeLocal" type="button" class="on">Sur cet écran</button>
+        <button id="modeOnline" type="button">En ligne avec un ami</button>
+      </div>
+      <div id="lobbyBox" class="lobby hidden">
+        <p class="eyebrow">CODE DE LA PARTIE</p>
+        <div id="lobbyCode" class="lobby-code">····</div>
+        <div class="lobby-actions">
+          <button id="copyCode" class="btn mini secondary" type="button">Copier le code</button>
+          <button id="copyLink" class="btn mini secondary" type="button">Copier le lien</button>
+          <button id="lobbyRetry" class="btn mini primary hidden" type="button">Réessayer</button>
+        </div>
+        <p id="lobbyStatus" class="lobby-status" aria-live="polite">Connexion…</p>
+      </div>
+      <div class="section-heading">
+        <h2>Qui joue aujourd’hui ?</h2>
+        <label class="count-field" for="playerCount">Joueurs
+          <select id="playerCount">
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </label>
+      </div>
+      <p class="fine">Chaque joueur choisit un personnage. Chacun a un pouvoir qui change sa façon de jouer.</p>
+      <div class="setup-modes">
+        <label class="count-field" for="gameMode">Fin de partie
+          <select id="gameMode">
+            <option value="last" selected>Dernier debout</option>
+            <option value="timed">Durée limitée</option>
+          </select>
+        </label>
+        <label class="count-field hidden" id="roundsField" for="maxRounds">Tours
+          <input id="maxRounds" type="number" min="5" max="99" value="30" />
+        </label>
+      </div>
+      <p id="modeHint" class="fine">Le dernier joueur encore solvable gagne. Choisis « Durée limitée » pour arrêter après N tours (le plus riche l’emporte).</p>
+      <div id="resumeBox" class="resume-box hidden">
+        <div>
+          <p class="eyebrow">PARTIE EN COURS</p>
+          <p id="resumeHint" class="fine">Une sauvegarde attend sur cet appareil.</p>
+        </div>
+        <div class="resume-actions">
+          <button id="resumeBtn" class="btn primary" type="button">Reprendre</button>
+          <button id="discardSaveBtn" class="btn quiet" type="button">Ignorer</button>
+        </div>
+      </div>
+      <div id="playerNames" class="player-setup"></div>
+      <button id="startGameBtn" class="btn primary big" type="button">Lancer la partie</button>
+    </section>
+
+    <section id="gamePanel" class="game-layout hidden" aria-label="Partie BoloPoly">
+      <div class="board-column">
+        <div class="board-topline">
+          <div id="roundLabel" class="round-label">TOUR 1</div><span id="clock" class="clock">00:00</span>
+          <span id="modeTag" class="mode-tag">Dernier debout</span>
+          <button id="rulesTopBtn" class="btn mini secondary fs-btn" type="button">📖 Règles</button>
+          <button id="fsBtn" class="btn mini secondary fs-btn" type="button" aria-pressed="false" title="Agrandir le plateau (touche F)">⛶ Plein écran</button>
+        </div>
+        <div class="board-wrap"><div id="board" class="board" aria-label="Plateau de jeu"></div></div>
+      </div>
+
+      <aside class="game-sidebar">
+        <section class="panel turn-panel">
+          <div class="turn-head">
+            <span id="curAvatar" class="avatar">🧺</span>
+            <div><h2 id="curName">Joueur 1</h2><p id="curChar" class="fine"></p></div>
+            <div class="cash"><small>Solde</small><strong id="curCash">1 500 000 <small>F</small></strong></div>
+          </div>
+          <p id="curPower" class="power"></p>
+          <div class="hud-chips">
+            <div><small>Tontine</small><strong id="tontineAmount">0 F</strong></div>
+            <div><small>Banque</small><strong id="bankStock">36 / 36</strong></div>
+          </div>
+          <div class="dice-area">
+            <div id="diceOne" class="die">⚀</div><div id="diceTwo" class="die">⚀</div>
+            <div class="dice-total"><small>TOTAL</small><strong id="diceTotal">–</strong></div>
+          </div>
+          <button id="rollBtn" class="btn primary full" type="button">🎲 Lancer les dés</button>
+          <button id="endTurnBtn" class="btn secondary full hidden" type="button">Terminer mon tour</button>
+          <p id="turnHint" class="turn-hint"></p>
+        </section>
+
+        <section class="panel players-panel">
+          <div class="section-heading"><h3>Joueurs</h3></div>
+          <div id="playersList" class="players-list"></div>
+        </section>
+
+        <section class="panel log-panel">
+          <div class="section-heading"><h3>Journal</h3></div>
+          <ol id="gameLog" class="game-log"></ol>
+        </section>
+      </aside>
+    </section>
+
+    <footer class="footer"><span>BOLOPOLY · v0.5</span><span>Les prix, loyers et événements sont fictifs.</span></footer>
+  </main>
+
+  <nav id="actionBar" class="action-bar hidden" aria-label="Actions">
+    <button type="button" class="ab-btn" data-bar="menu" aria-label="Menu de la partie" title="Menu"><span class="ab-icon" aria-hidden="true">☰</span><span class="ab-label">Menu</span></button>
+    <button type="button" class="ab-btn" data-bar="build" aria-label="Construire sur une propriété" title="Construire"><span class="ab-icon" aria-hidden="true">🏠</span><span class="ab-label">Construire</span><span class="ab-badge hidden"></span></button>
+    <button type="button" class="ab-btn" data-bar="sell" aria-label="Vendre un bien ou un bâtiment" title="Vendre"><span class="ab-icon" aria-hidden="true">💸</span><span class="ab-label">Vendre</span><span class="ab-badge hidden"></span></button>
+    <button type="button" class="ab-btn" data-bar="mortgage" aria-label="Hypothéquer une propriété" title="Hypothéquer"><span class="ab-icon" aria-hidden="true">🏦</span><span class="ab-label">Hypothéquer</span><span class="ab-badge hidden"></span></button>
+    <button type="button" class="ab-btn" data-bar="unmortgage" aria-label="Déshypothéquer une propriété" title="Déshypothéquer"><span class="ab-icon" aria-hidden="true">🔓</span><span class="ab-label">Déshypothéquer</span><span class="ab-badge hidden"></span></button>
+    <button type="button" class="ab-btn" data-bar="trade" aria-label="Échanger avec un autre joueur" title="Échanger"><span class="ab-icon" aria-hidden="true">🤝</span><span class="ab-label">Échanger</span></button>
+  </nav>
+  <div id="actionBanner" class="action-banner hidden" role="status">
+    <p id="actionBannerText">Clique sur le terrain</p>
+    <button id="actionDoneBtn" class="btn mini secondary" type="button">Terminé</button>
+  </div>
+  <div id="tileConfirm" class="tile-confirm hidden" role="dialog" aria-modal="true"></div>
+  <div id="modalRoot" class="modal-root hidden"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
