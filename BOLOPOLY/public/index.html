@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0d6b43" />
-  <title>BoloPoly v0.5.1</title>
+  <title>BoloPoly v0.6.0</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=0.5.1" />
-  <script src="data.js?v=0.5.1" defer></script>
-  <script src="script.js?v=0.5.1" defer></script>
-  <script src="online.js?v=0.5.1" defer></script>
+  <link rel="stylesheet" href="style.css?v=0.6.0" />
+  <script src="data.js?v=0.6.0" defer></script>
+  <script src="script.js?v=0.6.0" defer></script>
+  <script src="online.js?v=0.6.0" defer></script>
 </head>
 <body data-screen="home">
   <div class="pagne" aria-hidden="true"></div>
@@ -22,7 +22,7 @@
     </a>
     <div class="topbar-right">
       <button id="rulesBtn" class="btn mini quiet" type="button">Règles</button>
-      <span class="version">v0.5.1</span>
+      <span class="version">v0.6.0</span>
     </div>
   </header>
 
@@ -48,61 +48,7 @@
         <p>Ton ami t’a donné un code à 4 lettres ou un lien ? C’est ici.</p>
         <button id="joinGoBtn" class="btn secondary big" type="button">Rejoindre une partie</button>
       </article>
-    </section>
-
-    <section id="joinSection" class="setup panel" data-scr="join">
-      <button id="backHome2" class="btn mini quiet" type="button">← Retour</button>
-      <div class="section-heading"><h2>Rejoindre la partie</h2></div>
-      <div id="joinForm">
-        <label class="name-field"><span>Code de la partie</span><input id="joinCode" maxlength="4" placeholder="ABCD" autocomplete="off" /></label>
-        <label class="name-field"><span>Ton nom</span><input id="joinName" maxlength="14" placeholder="Ton nom" autocomplete="off" /></label>
-        <div id="joinChars" class="char-grid" role="radiogroup" aria-label="Ton personnage"></div>
-        <p id="joinPower" class="char-power"></p>
-        <button id="joinBtn" class="btn primary big" type="button">Rejoindre</button>
-      </div>
-      <p id="joinStatus" class="lobby-status" aria-live="polite"></p>
-    </section>
-
-    <section id="setupSection" class="setup panel" data-scr="setup">
-      <div class="setup-top"><button id="backHome" class="btn mini quiet" type="button">← Retour</button></div>
-      <div class="mode-switch" role="group" aria-label="Mode de jeu">
-        <button id="modeLocal" type="button" class="on">Sur cet écran</button>
-        <button id="modeOnline" type="button">En ligne avec un ami</button>
-      </div>
-      <div id="lobbyBox" class="lobby hidden">
-        <p class="eyebrow">CODE DE LA PARTIE</p>
-        <div id="lobbyCode" class="lobby-code">····</div>
-        <div class="lobby-actions">
-          <button id="copyCode" class="btn mini secondary" type="button">Copier le code</button>
-          <button id="copyLink" class="btn mini secondary" type="button">Copier le lien</button>
-          <button id="lobbyRetry" class="btn mini primary hidden" type="button">Réessayer</button>
-        </div>
-        <p id="lobbyStatus" class="lobby-status" aria-live="polite">Connexion…</p>
-      </div>
-      <div class="section-heading">
-        <h2>Qui joue aujourd’hui ?</h2>
-        <label class="count-field" for="playerCount">Joueurs
-          <select id="playerCount">
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-          </select>
-        </label>
-      </div>
-      <p class="fine">Chaque joueur choisit un personnage. Chacun a un pouvoir qui change sa façon de jouer.</p>
-      <div class="setup-modes">
-        <label class="count-field" for="gameMode">Fin de partie
-          <select id="gameMode">
-            <option value="last" selected>Dernier debout</option>
-            <option value="timed">Durée limitée</option>
-          </select>
-        </label>
-        <label class="count-field hidden" id="roundsField" for="maxRounds">Tours
-          <input id="maxRounds" type="number" min="5" max="99" value="30" />
-        </label>
-      </div>
-      <p id="modeHint" class="fine">Le dernier joueur encore solvable gagne. Choisis « Durée limitée » pour arrêter après N tours (le plus riche l’emporte).</p>
-      <div id="resumeBox" class="resume-box hidden">
+          <div id="resumeBox" class="resume-box hidden">
         <div>
           <p class="eyebrow">PARTIE EN COURS</p>
           <p id="resumeHint" class="fine">Une sauvegarde attend sur cet appareil.</p>
@@ -112,10 +58,107 @@
           <button id="discardSaveBtn" class="btn quiet" type="button">Ignorer</button>
         </div>
       </div>
-      <div id="playerNames" class="player-setup"></div>
-      <button id="startGameBtn" class="btn primary big" type="button">Lancer la partie</button>
     </section>
 
+    <section id="joinSection" class="setup panel wizard" data-scr="join">
+      <header class="wz-head">
+        <button id="backHome2" class="btn mini quiet" type="button">← Accueil</button>
+        <div class="wz-progress"><span id="wzjNo" class="wz-no">Étape 1 sur 3</span><div class="wz-bar"><i id="wzjFill"></i></div></div>
+      </header>
+      <div class="wz-body">
+        <div id="joinForm">
+          <div class="wz-step" data-wzj="code">
+            <p class="wz-eyebrow">REJOINDRE UNE PARTIE</p>
+            <h2 class="wz-title">Quel est le code de la partie ?</h2>
+            <p class="wz-lead">4 lettres, données par ton ami. Si tu as reçu un lien, il remplit le code pour toi.</p>
+            <input id="joinCode" class="code-input" maxlength="4" placeholder="ABCD" autocomplete="off" aria-label="Code de la partie" />
+          </div>
+          <div class="wz-step" data-wzj="me">
+            <p class="wz-eyebrow">TON JOUEUR</p>
+            <h2 class="wz-title">Qui es-tu ?</h2>
+            <label class="name-field"><span>Ton nom</span><input id="joinName" maxlength="14" placeholder="Ton nom" autocomplete="off" /></label>
+            <div id="joinChars" class="char-grid" role="radiogroup" aria-label="Ton personnage"></div>
+            <p id="joinPower" class="char-power"></p>
+            <div id="joinColors" class="color-row" role="radiogroup" aria-label="Ta couleur"></div>
+          </div>
+        </div>
+        <div class="wz-step" data-wzj="wait">
+          <p class="wz-eyebrow">CONNEXION</p>
+          <h2 class="wz-title" id="waitTitle">On te connecte…</h2>
+          <div class="wz-spinner" aria-hidden="true"></div>
+        </div>
+        <p id="joinStatus" class="lobby-status" aria-live="polite"></p>
+      </div>
+      <footer class="wz-foot">
+        <button id="wzjPrev" class="btn quiet" type="button">← Précédent</button>
+        <button id="wzjNext" class="btn primary big" type="button">Continuer →</button>
+        <button id="joinBtn" class="hidden" type="button" tabindex="-1" aria-hidden="true">Rejoindre</button>
+      </footer>
+    </section>
+
+    <section id="setupSection" class="setup panel wizard" data-scr="setup">
+      <header class="wz-head">
+        <button id="backHome" class="btn mini quiet" type="button">← Accueil</button>
+        <div class="wz-progress"><span id="wzNo" class="wz-no">Étape 1 sur 5</span><div class="wz-bar"><i id="wzFill"></i></div></div>
+      </header>
+      <div class="wz-body">
+        <div class="wz-step" data-wz="mode">
+          <p class="wz-eyebrow">NOUVELLE PARTIE</p>
+          <h2 class="wz-title">Comment voulez-vous jouer ?</h2>
+          <div class="wz-cards" role="group" aria-label="Mode de jeu">
+            <button id="modeLocal" type="button" class="choice on"><span class="choice-ic">🖥️</span><strong>Sur cet écran</strong><small>Tout le monde autour du même appareil. Des bots peuvent compléter la table.</small></button>
+            <button id="modeOnline" type="button" class="choice"><span class="choice-ic">🌐</span><strong>En ligne avec un ami</strong><small>Chacun sur son PC. Tu reçois un code à lui donner.</small></button>
+          </div>
+        </div>
+        <div class="wz-step" data-wz="room">
+          <p class="wz-eyebrow">SALLE DE JEU</p>
+          <h2 class="wz-title">Invite ton ami</h2>
+          <div id="lobbyBox" class="lobby hidden">
+            <p class="eyebrow">CODE DE LA PARTIE</p>
+            <div id="lobbyCode" class="lobby-code">····</div>
+            <div class="lobby-actions">
+              <button id="copyCode" class="btn mini secondary" type="button">Copier le code</button>
+              <button id="copyLink" class="btn mini secondary" type="button">Copier le lien</button>
+              <button id="lobbyRetry" class="btn mini primary hidden" type="button">Réessayer</button>
+            </div>
+            <p id="lobbyStatus" class="lobby-status" aria-live="polite">Connexion…</p>
+          </div>
+        </div>
+        <div class="wz-step" data-wz="rules">
+          <p class="wz-eyebrow">LES RÈGLES</p>
+          <h2 class="wz-title">Combien de joueurs, et jusqu’à quand ?</h2>
+          <p class="wz-label">Joueurs</p>
+          <div id="countPick" class="seg" role="group" aria-label="Nombre de joueurs">
+            <button type="button" data-n="2">2</button><button type="button" data-n="3">3</button><button type="button" data-n="4">4</button>
+          </div>
+          <select id="playerCount" class="hidden" aria-hidden="true" tabindex="-1"><option value="2">2</option><option value="3">3</option><option value="4">4</option></select>
+          <p class="wz-label">Fin de partie</p>
+          <div class="wz-cards" role="group" aria-label="Fin de partie">
+            <button type="button" class="choice" data-wm="last"><span class="choice-ic">🏁</span><strong>Dernier debout</strong><small>Le dernier joueur solvable gagne.</small></button>
+            <button type="button" class="choice" data-wm="timed"><span class="choice-ic">⏳</span><strong>Durée limitée</strong><small>Après N tours, le plus riche l’emporte.</small></button>
+          </div>
+          <select id="gameMode" class="hidden" aria-hidden="true" tabindex="-1"><option value="last" selected>Dernier debout</option><option value="timed">Durée limitée</option></select>
+          <label class="count-field hidden" id="roundsField" for="maxRounds">Nombre de tours <input id="maxRounds" type="number" min="5" max="99" value="30" /></label>
+          <p id="modeHint" class="fine"></p>
+        </div>
+        <div class="wz-step" data-wz="seat">
+          <p class="wz-eyebrow" id="seatEyebrow">JOUEUR 1</p>
+          <h2 class="wz-title" id="seatTitle">Qui joue ?</h2>
+          <div id="playerNames" class="player-setup"></div>
+        </div>
+        <div class="wz-step" data-wz="recap">
+          <p class="wz-eyebrow">C’EST PRÊT</p>
+          <h2 class="wz-title">Vérifie ta table</h2>
+          <div id="recap" class="recap"></div>
+          <p id="recapNote" class="lobby-status"></p>
+          <button id="startGameBtn" class="btn primary big" type="button">Lancer la partie</button>
+        </div>
+      </div>
+      <footer class="wz-foot">
+        <button id="wzPrev" class="btn quiet" type="button">← Précédent</button>
+        <button id="wzNext" class="btn primary big" type="button">Continuer →</button>
+      </footer>
+    </section>
     <section id="gamePanel" class="game-layout hidden" aria-label="Partie BoloPoly">
       <div class="board-column">
         <div class="board-topline">
@@ -135,10 +178,6 @@
             <div class="cash"><small>Solde</small><strong id="curCash">1 500 000 <small>F</small></strong></div>
           </div>
           <p id="curPower" class="power"></p>
-          <div class="hud-chips">
-            <div><small>Tontine</small><strong id="tontineAmount">0 F</strong></div>
-            <div><small>Banque</small><strong id="bankStock">36 / 36</strong></div>
-          </div>
           <div class="dice-area">
             <div id="diceOne" class="die">⚀</div><div id="diceTwo" class="die">⚀</div>
             <div class="dice-total"><small>TOTAL</small><strong id="diceTotal">–</strong></div>
@@ -153,14 +192,23 @@
           <div id="playersList" class="players-list"></div>
         </section>
 
+        <section id="bankPanel" class="panel bk-panel closed">
+          <button id="bankToggle" class="bk-head" type="button" aria-expanded="false"><span>BANQUE</span><i aria-hidden="true">▾</i></button>
+          <div class="bk-body">
+          <div class="hud-chips">
+            <div><small>Tontine</small><strong id="tontineAmount">0 F</strong></div>
+            <div><small>Banque</small><strong id="bankStock">36 / 36</strong></div>
+          </div>
+          </div>
+        </section>
         <section class="panel log-panel">
-          <div class="section-heading"><h3>Journal</h3></div>
+          <div class="section-heading"><h3>Historique</h3></div>
           <ol id="gameLog" class="game-log"></ol>
         </section>
       </aside>
     </section>
 
-    <footer class="footer"><span>BOLOPOLY · v0.5.1</span><span>Les prix, loyers et événements sont fictifs.</span></footer>
+    <footer class="footer"><span>BOLOPOLY · v0.6.0</span><span>Les prix, loyers et événements sont fictifs.</span></footer>
   </main>
 
   <nav id="actionBar" class="action-bar hidden" aria-label="Actions">
@@ -178,5 +226,6 @@
   <div id="tileConfirm" class="tile-confirm hidden" role="dialog" aria-modal="true"></div>
   <div id="modalRoot" class="modal-root hidden"></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="wizard.js?v=0.6.0" defer></script>
 </body>
 </html>

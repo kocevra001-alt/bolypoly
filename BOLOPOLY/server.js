@@ -36,7 +36,7 @@ wss.on('connection', (ws) => {
       if (r.guest) return send(ws, { t: 'error', msg: 'Cette partie a déjà un invité.' });
       r.guest = ws; ws.room = c; ws.role = 'guest';
       send(ws, { t: 'joined' });
-      return send(r.host, { t: 'guest-in', name: String(m.name || '').slice(0, 14), char: m.char });
+      return send(r.host, { t: 'guest-in', name: String(m.name || '').slice(0, 14), char: m.char, color: Number.isInteger(m.color) ? m.color : undefined });
     }
     const r = rooms.get(ws.room);
     if (r) send(ws.role === 'host' ? r.guest : r.host, m);

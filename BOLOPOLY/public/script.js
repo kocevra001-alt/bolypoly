@@ -7,7 +7,8 @@
 
 const $ = (id) => document.getElementById(id);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const PLAYER_COLORS = ['#e4572e', '#2f6fd0', '#1f9a5c', '#8e44ad'];
+const PLAYER_COLORS = ['#e4002b', '#1565d8', '#16a34a', '#7b2fbe', '#ff8a00', '#111827'];
+const COLOR_NAMES = ['Rouge', 'Bleu', 'Vert', 'Violet', 'Orange', 'Noir'];
 const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 const fmt = (n) => Math.round(n).toLocaleString('fr-FR');
 const money = (n) => `${fmt(n)} F`;
@@ -36,8 +37,19 @@ const setup = {
   chars: ['commercante', 'planteur', 'chauffeur', 'etudiant'],
   kinds: ['human', 'bot', 'bot', 'bot'],
   diffs: ['normal', 'normal', 'normal', 'normal'],
+  colors: [0, 1, 2, 3, 4, 5],   // indice dans PLAYER_COLORS, un par siège
   winMode: 'last', maxRounds: 30
 };
+
+/* Chaque siège garde une couleur unique : en cas de doublon, le siège suivant prend la première libre. */
+function normalizeColors() {
+  const used = new Set();
+  for (let i = 0; i < 4; i += 1) {
+    let c = setup.colors[i];
+    if (!Number.isInteger(c) || c < 0 || c >= PLAYER_COLORS.length || used.has(c)) c = PLAYER_COLORS.findIndex((_, k) => !used.has(k));
+    setup.colors[i] = c; used.add(c);
+  }
+}
 
 const BAR_META = {
   build: { label: 'Construire', prompt: 'Clique sur le terrain à construire' },
@@ -619,8 +631,15 @@ function renderBoard() {
     const pawns = tile.querySelector('.pawns');
     pawns.innerHTML = state.players
       .filter((p) => !p.eliminated && p.pos === i)
-      .map((p) => `<span class="pawn${p.inJail ? ' jailed' : ''}" style="--pc:${p.color}" title="${esc(p.name)}">${charOf(p).emoji}</span>`)
+      .map((p) => `<span class="pawn${p.inJail ? ' jailed' : ''}${p.id === state.cur && !state.over ? ' cur' : ''}" style="--pc:${p.color}" title="${esc(p.name)}">${charOf(p).emoji}</span>`)
       .join('');
+    // la case clignote dans la couleur du pion qui s'y trouve (celui qui joue en priorité)
+    const here = state.players.filter((p) => !p.eliminated && p.pos === i);
+    const lead = here.find((p) => p.id === state.cur) || here[0];
+    const other = lead && here.find((p) => p.color !== lead.color);
+    tile.classList.toggle('occupied', !!lead);
+    if (lead) tile.style.setProperty('--pc', lead.color); else tile.style.removeProperty('--pc');
+    if (other) tile.style.setProperty('--pc2', other.color); else tile.style.removeProperty('--pc2');
     const pr = state.props[i];
     if (pr) {
       tile.querySelector('.own').style.background = pr.owner === null ? 'transparent' : byId(pr.owner).color;
@@ -653,6 +672,30 @@ function renderTurn() {
   $('curPower').textContent = p.isBot ? `${c.power} · Bot ${ (BOT_DIFF[p.diff] || BOT_DIFF.normal).label.toLowerCase() }` : c.power;
 }
 
+/* Joueurs : cartes repliables. Le joueur dont c'est le tour est déplié, les autres repliés ;
+   un clic sur l'en-tête ouvre ou ferme (état local à chaque écran, remis à zéro à chaque tour). */
+const uiFold = new Map();
+let foldCur = -1;
+function applyFolds() {
+  if (foldCur !== state.cur) { uiFold.clear(); foldCur = state.cur; }
+  document.querySelectorAll('#playersList .player-row').forEach((row) => {
+    const pid = Number(row.dataset.pid);
+    const open = uiFold.has(pid) ? uiFold.get(pid) : (pid === state.cur && !state.over);
+    row.classList.toggle('open', open);
+    const h = row.querySelector('.pr-head');
+    if (h) h.setAttribute('aria-expanded', String(open));
+  });
+}
+function toggleFold(pid) {
+  const row = document.querySelector(`#playersList .player-row[data-pid="${pid}"]`);
+  uiFold.set(pid, !(row && row.classList.contains('open')));
+  applyFolds();
+}
+document.addEventListener('click', (e) => {
+  const h = e.target.closest('.pr-head');
+  if (h) toggleFold(Number(h.parentElement.dataset.pid));
+});
+
 function renderPlayers() {
   const list = $('playersList');
   list.innerHTML = '';
@@ -660,21 +703,32 @@ function renderPlayers() {
     const c = charOf(p);
     const row = document.createElement('div');
     row.className = `player-row${idx === state.cur && !state.over ? ' current' : ''}${p.eliminated ? ' eliminated' : ''}`;
-    const n = ownedIdx(p).length;
+    row.dataset.pid = idx;
+    row.style.setProperty('--pc', p.color);
+    const owned = ownedIdx(p), n = owned.length;
+    const houses = owned.reduce((a, i) => a + (state.props[i].level > 0 && state.props[i].level < 5 ? state.props[i].level : 0), 0);
+    const hotels = owned.filter((i) => state.props[i].level === 5).length;
     row.innerHTML = `
-      <span class="player-dot" style="--pc:${p.color}">${c.emoji}</span>
-      <div><strong>${esc(p.name)}</strong>
-        <small>${p.eliminated ? 'En faillite' : `${p.isBot ? `Bot ${(BOT_DIFF[p.diff] || BOT_DIFF.normal).label} · ` : ''}${n} bien${n > 1 ? 's' : ''} · ${networkLines(p)} ligne${networkLines(p) > 1 ? 's' : ''}${p.inJail ? ' · au violon' : ''}${p.jailCards.length ? ' · 🎫' : ''}`}</small></div>
-      <span class="player-cash">${money(p.cash)}<small>Fortune ${money(netWorth(p))}</small></span>`;
+      <button type="button" class="pr-head" aria-expanded="false">
+        <span class="player-dot" style="--pc:${p.color}">${c.emoji}</span>
+        <span class="pr-id"><strong>${esc(p.name)}</strong>
+          <small>${p.eliminated ? 'En faillite' : `${p.isBot ? `Bot ${(BOT_DIFF[p.diff] || BOT_DIFF.normal).label} · ` : ''}${n} bien${n > 1 ? 's' : ''} · ${networkLines(p)} ligne${networkLines(p) > 1 ? 's' : ''}${p.inJail ? ' · au violon' : ''}`}</small></span>
+        <span class="player-cash">${money(p.cash)}</span>
+        <span class="pr-caret" aria-hidden="true">▾</span>
+      </button>
+      <div class="pr-body">
+        <p class="pr-line"><span>Fortune <b>${money(netWorth(p))}</b></span><span title="Niveaux de construction">🏠 ${houses}</span><span title="Grands complexes">🏨 ${hotels}</span>${p.jailCards.length ? `<span title="Sortie du violon">🎫 ${p.jailCards.length}</span>` : ''}</p>
+      </div>`;
     const grid = document.createElement('div');
     grid.className = 'set-grid';
     Object.keys(GROUPS).forEach((g) => {
       const cells = GROUP_INDEX[g].map((i) => `<i class="${state.props[i].owner === p.id ? 'on' : ''}" style="--gc:${GROUPS[g].color}"></i>`).join('');
       grid.insertAdjacentHTML('beforeend', `<span class="set">${cells}</span>`);
     });
-    row.appendChild(grid);
+    row.querySelector('.pr-body').appendChild(grid);
     list.appendChild(row);
   });
+  applyFolds();
 }
 
 function renderCenter() {
@@ -1629,17 +1683,24 @@ async function onQuit() {
    Préparation de la partie
    ============================================================ */
 function renderSetup() {
+  normalizeColors();
   const box = $('playerNames');
   box.innerHTML = '';
   for (let i = 0; i < setup.count; i += 1) {
     const sel = CHARACTERS.find((c) => c.id === setup.chars[i]);
     const block = document.createElement('div');
     block.className = 'pl-block';
-    block.style.setProperty('--pc', PLAYER_COLORS[i]);
+    block.style.setProperty('--pc', PLAYER_COLORS[setup.colors[i]]);
     const bot = setup.kinds[i] === 'bot';
     block.innerHTML = `
       <label class="name-field"><span><i class="name-color"></i>Joueur ${i + 1}</span>
         <input class="name-input" id="playerName${i}" type="text" maxlength="18" autocomplete="off" placeholder="${bot ? 'Nom du bot' : 'Nom du joueur ' + (i + 1)}" value="${esc(setup.names[i])}"></label>
+      <div class="color-row" role="radiogroup" aria-label="Couleur du joueur ${i + 1}">
+        ${PLAYER_COLORS.map((c, k) => {
+          const holder = setup.colors.findIndex((x, j) => x === k && j < setup.count && j !== i);
+          return `<button type="button" class="color-opt${setup.colors[i] === k ? ' on' : ''}${holder >= 0 ? ' taken' : ''}" data-p="${i}" data-col="${k}" style="--c:${c}" role="radio" aria-checked="${setup.colors[i] === k}" aria-label="${COLOR_NAMES[k]}" title="${COLOR_NAMES[k]}${holder >= 0 ? ' (prise par le joueur ' + (holder + 1) + ' : un clic échange)' : ''}"></button>`;
+        }).join('')}
+      </div>
       <div class="seat-row">
         <div class="kind-toggle" role="group" aria-label="Humain ou bot">
           <button type="button" class="${bot ? '' : 'on'}" data-kind="human" data-p="${i}">Humain</button>
@@ -1664,6 +1725,13 @@ function renderSetup() {
   }));
   box.querySelectorAll('select[data-diff]').forEach((selEl) => selEl.addEventListener('change', () => {
     setup.diffs[Number(selEl.dataset.diff)] = selEl.value;
+  }));
+  box.querySelectorAll('.color-opt').forEach((btn) => btn.addEventListener('click', () => {
+    const pi = Number(btn.dataset.p), col = Number(btn.dataset.col);
+    const holder = setup.colors.findIndex((x, k) => x === col && k < setup.count && k !== pi);
+    if (holder >= 0) setup.colors[holder] = setup.colors[pi];
+    setup.colors[pi] = col;
+    renderSetup();
   }));
   box.querySelectorAll('.char-opt').forEach((btn) => btn.addEventListener('click', () => {
     const pi = Number(btn.dataset.p), cid = btn.dataset.c;
@@ -1696,7 +1764,7 @@ function startGame() {
     return {
       id: i,
       name: (setup.names[i] || '').trim() || (isBot ? `Bot · ${ch.short}` : `Joueur ${i + 1}`),
-      color: PLAYER_COLORS[i], char: setup.chars[i],
+      color: PLAYER_COLORS[setup.colors[i]], char: setup.chars[i],
       cash: CONFIG.startingCash, pos: 0, inJail: false, jailTurns: 0, skip: 0, jailCards: [],
       eliminated: false, isBot, diff: setup.diffs[i] || 'normal'
     };

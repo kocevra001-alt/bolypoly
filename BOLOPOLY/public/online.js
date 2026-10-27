@@ -45,6 +45,7 @@ function onMsg(m) {
     const taken = setup.chars[0];
     setup.kinds[1] = 'human'; setup.names[1] = m.name || 'Invité';
     setup.chars[1] = (m.char !== taken && CHARACTERS.some((c) => c.id === m.char)) ? m.char : CHARACTERS.find((c) => c.id !== taken).id;
+    if (Number.isInteger(m.color) && m.color >= 0 && m.color < PLAYER_COLORS.length) setup.colors[1] = m.color;   // normalizeColors() règle un éventuel doublon
     renderSetup(); updateStart();
     status(`${setup.names[1]} est connecté. Tu peux lancer la partie !`);
     snap(true);
@@ -122,6 +123,7 @@ rootEl('board').addEventListener('mouseout', (e) => {
 /* ---------- Entrées : l'invité envoie, l'hôte exécute ---------- */
 const rootOf = (t) => Object.keys(ROOTS).find((k) => k !== 'label' && rootEl(k) && rootEl(k).contains(t));
 document.addEventListener('click', (e) => {
+  if (e.target.closest('.pr-head')) return;   // plier/déplier une carte joueur : purement local, pas de tour requis
   const k = rootOf(e.target);
   if (!k) return;
   if (ONLINE.role === 'guest') {
@@ -235,6 +237,10 @@ let chosenChar = CHARACTERS[0].id;
 const showPower = () => { const c = CHARACTERS.find((x) => x.id === chosenChar); $('joinPower').innerHTML = `<strong>${c.name}.</strong> ${c.power}`; };
 $('joinChars').innerHTML = CHARACTERS.map((c) => `<button type="button" class="char-opt${c.id === chosenChar ? ' on' : ''}" data-c="${c.id}" role="radio"><span>${c.emoji}</span> ${c.short}</button>`).join('');
 showPower();
+let chosenColor = 1;
+const paintJoinColors = () => { $('joinColors').innerHTML = PLAYER_COLORS.map((c, k) => `<button type="button" class="color-opt${k === chosenColor ? ' on' : ''}" data-col="${k}" style="--c:${c}" role="radio" aria-checked="${k === chosenColor}" aria-label="${COLOR_NAMES[k]}" title="${COLOR_NAMES[k]}"></button>`).join(''); };
+paintJoinColors();
+$('joinColors').addEventListener('click', (e) => { const b = e.target.closest('[data-col]'); if (b) { chosenColor = Number(b.dataset.col); paintJoinColors(); } });
 $('joinChars').addEventListener('click', (e) => {
   const b = e.target.closest('[data-c]');
   if (!b) return;
@@ -257,7 +263,7 @@ $('joinBtn').addEventListener('click', () => {
   if (code.length !== 4) { status('Entre le code à 4 lettres de la partie.', true); return; }
   ONLINE.role = 'guest'; ONLINE.me = 1;
   status('Connexion…');
-  connect(() => wsSend({ t: 'join', code, name: $('joinName').value.trim(), char: chosenChar }));
+  connect(() => wsSend({ t: 'join', code, name: $('joinName').value.trim(), char: chosenChar, color: chosenColor }));
   watchServer();
 });
 const urlCode = (new URLSearchParams(location.search).get('code') || '').toUpperCase();
@@ -312,7 +318,7 @@ function paintPerspective() {
 // Déclenché par les événements du jeu (pas de sondage rapide) + filet de sécurité à 1 s.
 [['renderAll'], ['closeModal'], ['applySnap'], ['updateStart']].forEach(([n]) => {
   const orig = window[n];
-  window[n] = function (...a) { const r = orig.apply(this, a); paintPerspective(); return r; };
+  window[n] = function (...a) { const r = orig.apply(this, a); if (n === 'applySnap') applyFolds(); paintPerspective(); return r; };
 });
 const _ask = ask;
 ask = function (...a) { const r = _ask(...a); paintPerspective(); return r; };
