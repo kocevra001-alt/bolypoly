@@ -1,0 +1,4 @@
+Pour mettre ton propre son de dés, dépose ici :
+  dice-throw.mp3  -> son du lancement (dés secoués puis lancés)
+  dice-hit.mp3    -> son d'un choc de dé (court, joué à chaque rebond)
+Formats acceptés : mp3, ogg ou wav. Sans fichier, le jeu utilise un son synthétisé (toc de dés sur du bois).

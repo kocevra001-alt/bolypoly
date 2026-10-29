@@ -3,20 +3,24 @@ const ONLINE = { role: null, ws: null, code: null, me: 0, guestId: 1, peer: fals
 const MOVE_SECONDS = window.BOLO_MOVE_SECONDS || 30;
 const ROOTS = { board: '#board', side: '.game-sidebar', bar: '#actionBar', banner: '#actionBanner', modal: '#modalRoot', label: '#roundLabel' };
 const rootEl = (k) => document.querySelector(ROOTS[k]);
+window.DiceNetSend = (m) => { if (ONLINE.role === 'host' && ONLINE.peer) wsSend({ t: 'dice', ...m }); };
 const wsSend = (o) => { if (ONLINE.ws && ONLINE.ws.readyState === 1) ONLINE.ws.send(JSON.stringify(o)); };
 const modalOpen = () => !rootEl('modal').classList.contains('hidden');
 const controllerId = () => (modalOpen() && state.modalActor != null ? state.modalActor : state.cur);
 const fire = (el, type = 'click') => el.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true }));
 function pathOf(root, el) { const p = []; while (el && el !== root) { const par = el.parentElement; p.unshift(Array.prototype.indexOf.call(par.children, el)); el = par; } return p; }
 function byPath(root, p) { let el = root; for (const i of p) el = el && el.children[i]; return el; }
-const status = (msg, err) => { const el = $(ONLINE.role === 'guest' ? 'joinStatus' : 'lobbyStatus'); el.textContent = msg; el.classList.toggle('err', !!err); };
+const status = (msg, err) => {
+  const ids = ONLINE.role === 'guest' ? ['joinStatus', 'waitStatus'] : ['lobbyStatus'];
+  ids.forEach((id) => { const el = $(id); el.textContent = msg; el.classList.toggle('err', !!err); });
+};
 let wasPlaying = false;
 
 /* ---------- Connexion ---------- */
 const NO_SERVER = 'Le serveur BOLOPOLY ne répond pas. Tu as sans doute ouvert le jeu avec un autre outil (Live Server, double-clic sur le fichier…). Lance le serveur du jeu : double-clique sur start.bat (ou tape npm start dans le dossier), puis ouvre http://localhost:8787.';
 function watchServer() {
   clearTimeout(ONLINE.watch);
-  ONLINE.watch = setTimeout(() => { status(NO_SERVER, true); if (ONLINE.role === 'host') $('lobbyRetry').classList.remove('hidden'); resetOnline(); }, 6000);
+  ONLINE.watch = setTimeout(() => { const guest = ONLINE.role === 'guest'; status(NO_SERVER, true); if (ONLINE.role === 'host') $('lobbyRetry').classList.remove('hidden'); resetOnline(); if (guest) goScreen('join-code'); }, 6000);
 }
 function resetOnline() {
   clearTimeout(ONLINE.watch);
@@ -24,7 +28,7 @@ function resetOnline() {
   Object.assign(ONLINE, { role: null, ws: null, code: null, peer: false, last: {} });
 }
 function connect(onOpen) {
-  const fail = (msg) => { status(msg, true); if (ONLINE.role === 'host') $('lobbyRetry').classList.remove('hidden'); ONLINE.role = null; ONLINE.ws = null; };
+  const fail = (msg) => { const guest = ONLINE.role === 'guest'; status(msg, true); if (ONLINE.role === 'host') $('lobbyRetry').classList.remove('hidden'); ONLINE.role = null; ONLINE.ws = null; if (guest) goScreen('join-code'); };
   if (location.protocol === 'file:') { fail('Le jeu est ouvert depuis un fichier. Lance le serveur (npm start) et ouvre http://localhost:8787.'); return; }
   let opened = false;
   const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
@@ -33,33 +37,31 @@ function connect(onOpen) {
   ws.onmessage = (e) => onMsg(JSON.parse(e.data));
   ws.onclose = () => {
     if (!opened) { fail('Impossible de joindre le serveur de jeu. Ouvre le jeu depuis l’adresse du serveur (Render ou http://localhost:8787), pas depuis un simple hébergement de fichiers.'); return; }
-    if (ONLINE.role) { ONLINE.peer = false; status('Connexion perdue. Reviens à l’accueil et recommence.', true); showToast('Connexion perdue.'); updateStart(); }
+    if (ONLINE.role) { ONLINE.peer = false; status('Connexion perdue. Reviens à l’accueil et recommence.', true); showToast('Connexion perdue.'); renderFlow(); }
   };
 }
 
 function onMsg(m) {
   if (m.t === 'hosted') { clearTimeout(ONLINE.watch); ONLINE.code = m.code; $('lobbyCode').textContent = m.code; status('En attente de ton ami… Donne-lui ce code ou ce lien.'); }
-  else if (m.t === 'error') { status(m.msg, true); resetOnline(); }
+  else if (m.t === 'error') { const guest = ONLINE.role === 'guest'; status(m.msg, true); resetOnline(); if (guest) goScreen('join-code'); }
   else if (m.t === 'guest-in') {
     ONLINE.peer = true;
-    const taken = setup.chars[0];
-    setup.kinds[1] = 'human'; setup.names[1] = m.name || 'Invité';
-    setup.chars[1] = (m.char !== taken && CHARACTERS.some((c) => c.id === m.char)) ? m.char : CHARACTERS.find((c) => c.id !== taken).id;
-    if (Number.isInteger(m.color) && m.color >= 0 && m.color < PLAYER_COLORS.length) setup.colors[1] = m.color;   // normalizeColors() règle un éventuel doublon
-    renderSetup(); updateStart();
-    status(`${setup.names[1]} est connecté. Tu peux lancer la partie !`);
+    applyGuestProfile(m);
+    renderFlow();
+    status(`${setup.names[1]} est connecté. Tu peux continuer !`);
     snap(true);
   }
-  else if (m.t === 'joined') { clearTimeout(ONLINE.watch); status('Connecté ! L’hôte va lancer la partie…'); $('joinForm').classList.add('hidden'); wsSend({ t: 'hello' }); }
+  else if (m.t === 'joined') { clearTimeout(ONLINE.watch); status('Connecté ! L’hôte va lancer la partie…'); wsSend({ t: 'hello' }); }
   else if (m.t === 'hello') snap(true);
   else if (m.t === 'peer-left') {
-    if (ONLINE.role === 'host') { ONLINE.peer = false; status('Ton ami s’est déconnecté. Il peut se reconnecter avec le même code.', true); renderSetup(); updateStart(); }
-    else { status('L’hôte a quitté la partie.', true); document.body.classList.remove('playing'); $('gamePanel').classList.add('hidden'); resetOnline(); $('joinForm').classList.remove('hidden'); goScreen('join'); }
+    if (ONLINE.role === 'host') { ONLINE.peer = false; status('Ton ami s’est déconnecté. Il peut se reconnecter avec le même code.', true); renderFlow(); }
+    else { status('L’hôte a quitté la partie.', true); document.body.classList.remove('playing'); $('gamePanel').classList.add('hidden'); resetOnline(); goScreen('join-code'); }
     showToast('L’autre joueur s’est déconnecté.');
   }
   else if (m.t === 'snap') applySnap(m);
   else if (m.t === 'timer') showChip(m.left, m.name, m.clock);
   else if (m.t === 'click' || m.t === 'field') onRemoteInput(m);
+  else if (m.t === 'dice') { if (window.Dice3D && Dice3D.mirror) Dice3D.mirror(m); }
 }
 
 /* ---------- Hôte : envoi de l'écran ---------- */
@@ -88,7 +90,7 @@ new MutationObserver((list) => {
 
 /* ---------- Invité : réception de l'écran ---------- */
 function applySnap(m) {
-  if (wasPlaying && !m.playing) { status('Partie terminée. Attends que l’hôte en relance une…'); goScreen('join'); }
+  if (wasPlaying && !m.playing) { goScreen('join-wait'); status('Partie terminée. Attends que l’hôte en relance une…'); }
   wasPlaying = m.playing;
   document.body.classList.toggle('playing', m.playing);
   $('gamePanel').classList.toggle('hidden', !m.playing);
@@ -123,7 +125,7 @@ rootEl('board').addEventListener('mouseout', (e) => {
 /* ---------- Entrées : l'invité envoie, l'hôte exécute ---------- */
 const rootOf = (t) => Object.keys(ROOTS).find((k) => k !== 'label' && rootEl(k) && rootEl(k).contains(t));
 document.addEventListener('click', (e) => {
-  if (e.target.closest('.pr-head')) return;   // plier/déplier une carte joueur : purement local, pas de tour requis
+  if (e.target.closest('.pr-head, .fold-head')) return;   // plier/déplier une carte joueur : purement local, pas de tour requis
   const k = rootOf(e.target);
   if (!k) return;
   if (ONLINE.role === 'guest') {
@@ -195,79 +197,7 @@ setInterval(() => {
   if (left === 0) { ONLINE.deadline = Date.now() + MOVE_SECONDS * 1000; onTimeout(open); }
 }, 1000);
 
-/* ---------- Pages avant le jeu : accueil, choix des joueurs, rejoindre ---------- */
-const goScreen = (name) => { document.body.dataset.screen = name; window.scrollTo(0, 0); };
-$('homeSection').appendChild($('resumeBox'));   // « Reprendre » s'affiche dès l'accueil
-const _renderSetup = renderSetup;
-renderSetup = function () { _renderSetup(); decorateSeats(); };
-function decorateSeats() {
-  const b = $('playerNames').children[1];
-  if (!b) return;
-  b.classList.remove('remote', 'waiting');
-  const old = b.querySelector('.seat-badge'); if (old) old.remove();
-  if (ONLINE.role !== 'host') return;
-  b.classList.add(ONLINE.peer ? 'remote' : 'waiting');
-  b.insertAdjacentHTML('afterbegin', `<p class="seat-badge">${ONLINE.peer ? '🌐 Ami en ligne' : '⏳ En attente de ton ami…'}</p>`);
-}
-function updateStart() {
-  const b = $('startGameBtn');
-  b.disabled = ONLINE.role === 'host' && !ONLINE.peer;
-  b.title = b.disabled ? 'Attends que ton ami se connecte.' : '';
-}
-function hostRoom() {
-  if (ONLINE.role) return;
-  if (setup.count < 2) { setup.count = 2; $('playerCount').value = '2'; }
-  setup.kinds[1] = 'human';
-  ONLINE.role = 'host'; ONLINE.me = 0; ONLINE.guestId = 1;
-  $('lobbyCode').textContent = '····'; status('Connexion au serveur de jeu…');
-  renderSetup(); updateStart();
-  connect(() => wsSend({ t: 'host' }));
-  watchServer();
-}
-function setPlayMode(online) {
-  $('modeLocal').classList.toggle('on', !online);
-  $('modeOnline').classList.toggle('on', online);
-  $('lobbyBox').classList.toggle('hidden', !online);
-  $('lobbyRetry').classList.add('hidden');
-  if (online) hostRoom(); else { resetOnline(); renderSetup(); updateStart(); }
-}
-const copyText = (t) => { if (!t) return; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => showToast('Copié !'), () => window.prompt('Copie ceci :', t)); };
-
-let chosenChar = CHARACTERS[0].id;
-const showPower = () => { const c = CHARACTERS.find((x) => x.id === chosenChar); $('joinPower').innerHTML = `<strong>${c.name}.</strong> ${c.power}`; };
-$('joinChars').innerHTML = CHARACTERS.map((c) => `<button type="button" class="char-opt${c.id === chosenChar ? ' on' : ''}" data-c="${c.id}" role="radio"><span>${c.emoji}</span> ${c.short}</button>`).join('');
-showPower();
-let chosenColor = 1;
-const paintJoinColors = () => { $('joinColors').innerHTML = PLAYER_COLORS.map((c, k) => `<button type="button" class="color-opt${k === chosenColor ? ' on' : ''}" data-col="${k}" style="--c:${c}" role="radio" aria-checked="${k === chosenColor}" aria-label="${COLOR_NAMES[k]}" title="${COLOR_NAMES[k]}"></button>`).join(''); };
-paintJoinColors();
-$('joinColors').addEventListener('click', (e) => { const b = e.target.closest('[data-col]'); if (b) { chosenColor = Number(b.dataset.col); paintJoinColors(); } });
-$('joinChars').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-c]');
-  if (!b) return;
-  chosenChar = b.dataset.c;
-  [...$('joinChars').children].forEach((x) => x.classList.toggle('on', x === b));
-  showPower();
-});
-$('createBtn').addEventListener('click', () => { setPlayMode(false); goScreen('setup'); });
-$('joinGoBtn').addEventListener('click', () => { goScreen('join'); $('joinCode').focus(); });
-$('backHome').addEventListener('click', () => { resetOnline(); setPlayMode(false); goScreen('home'); });
-$('backHome2').addEventListener('click', () => { resetOnline(); $('joinForm').classList.remove('hidden'); $('joinStatus').textContent = ''; goScreen('home'); });
-$('modeLocal').addEventListener('click', () => setPlayMode(false));
-$('modeOnline').addEventListener('click', () => setPlayMode(true));
-$('lobbyRetry').addEventListener('click', () => { $('lobbyRetry').classList.add('hidden'); resetOnline(); hostRoom(); });
-$('copyCode').addEventListener('click', () => copyText(ONLINE.code));
-$('copyLink').addEventListener('click', () => copyText(ONLINE.code && `${location.origin}/?code=${ONLINE.code}`));
-$('joinBtn').addEventListener('click', () => {
-  const code = $('joinCode').value.trim().toUpperCase();
-  if (ONLINE.role) return;
-  if (code.length !== 4) { status('Entre le code à 4 lettres de la partie.', true); return; }
-  ONLINE.role = 'guest'; ONLINE.me = 1;
-  status('Connexion…');
-  connect(() => wsSend({ t: 'join', code, name: $('joinName').value.trim(), char: chosenChar, color: chosenColor }));
-  watchServer();
-});
-const urlCode = (new URLSearchParams(location.search).get('code') || '').toUpperCase();
-if (/^[A-Z]{4}$/.test(urlCode)) { $('joinCode').value = urlCode; goScreen('join'); }
+/* Le parcours avant la partie (accueil, étapes, salon) vit dans flow.js. */
 
 $('rulesTopBtn').addEventListener('click', () => {
   if (ONLINE.role === 'guest') {

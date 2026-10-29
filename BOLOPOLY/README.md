@@ -28,3 +28,11 @@ Render endort un service gratuit après 15 minutes sans visite ; le réveil pren
 1. Crée un compte gratuit sur uptimerobot.com (ou un équivalent comme cron-job.org).
 2. Ajoute un moniteur HTTP(s) sur `https://TON-ADRESSE.onrender.com/health`, toutes les 5 minutes.
 Attention : Render offre 750 heures gratuites par mois pour tout le compte. Un seul service allumé 24 h sur 24 en consomme 744 sur un mois de 31 jours : il ne doit donc y avoir que celui-là. Render peut aussi redémarrer un service gratuit à tout moment, ce qui coupe les parties en cours.
+
+## v0.7 — dés 3D
+Dés en 3D avec vraie physique (Three.js + cannon-es, dans `public/vendor/`, aucun accès internet requis).
+Les dés sont lancés directement sur la table du plateau (centre). Un seul clic sur « Lancer les dés » : les dés partent aussitôt, avec une force et une direction aléatoires.
+Le résultat est lu sur la face supérieure des dés une fois immobiles. En ligne, le jet se joue sur l'écran de l'hôte et le résultat est synchronisé. Les bots et les appareils sans WebGL gardent l'animation simple.
+
+Les dés des bots et de l'adversaire sont lancés avec la même animation 3D. En ligne, l'hôte envoie les positions des dés à l'invité, qui les voit rouler en direct avec les mêmes sons.
+Son : voir `public/sounds/LISEZMOI.txt` pour mettre tes propres fichiers.

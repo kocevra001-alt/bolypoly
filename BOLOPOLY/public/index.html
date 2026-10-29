@@ -2,167 +2,278 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0d6b43" />
-  <title>BoloPoly v0.6.0</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#103d2b" />
+  <title>BoloPoly</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=0.6.0" />
-  <script src="data.js?v=0.6.0" defer></script>
-  <script src="script.js?v=0.6.0" defer></script>
-  <script src="online.js?v=0.6.0" defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css?v=0.7.0" />
+  <link rel="stylesheet" href="flow.css?v=0.7.0" />
+  <script src="data.js?v=0.7.0" defer></script>
+  <script src="script.js?v=0.7.0" defer></script>
+  <script src="flow.js?v=0.7.0" defer></script>
+  <script src="online.js?v=0.7.0" defer></script>
+  <script type="module" src="dice3d.js?v=0.7.0"></script>
 </head>
 <body data-screen="home">
-  <div class="pagne" aria-hidden="true"></div>
-  <header class="topbar">
-    <a class="brand" href="#" aria-label="BoloPoly">
-      <span class="brand-mark">B</span>
-      <span><strong>BoloPoly</strong><small>Le Monopoly à l’ivoirienne</small></span>
-    </a>
-    <div class="topbar-right">
-      <button id="rulesBtn" class="btn mini quiet" type="button">Règles</button>
-      <span class="version">v0.6.0</span>
-    </div>
-  </header>
 
-  <main class="app-shell">
-    <section id="heroSection" class="hero" data-scr="home">
-      <div>
+  <!-- ===================== Parcours avant la partie ===================== -->
+  <div id="flow" class="flow" data-step="home" data-dir="fwd">
+    <aside class="flow-brand">
+      <div class="fb-top">
+        <a class="fb-logo" href="./" aria-label="BoloPoly, retour à l’accueil">
+          <span class="fb-mark">B</span>
+          <span class="fb-word">Bolo<span>Poly</span></span>
+        </a>
+      </div>
+
+      <div class="fb-pitch">
+        <p class="fb-kicker">Le Monopoly à l’ivoirienne</p>
         <h1>Marchande.<br />Cotise.<br />Construis.</h1>
-        <p class="hero-copy">D’Adjamé au Plateau, bâtis ton patrimoine à coups de marchandage, de tontine et de gbaka. Tes adversaires ont le même plan.</p>
+        <p class="fb-copy">D’Adjamé au Plateau, bâtis ton patrimoine à coups de marchandage, de tontine et de gbaka.</p>
       </div>
-      <div class="hero-art" aria-hidden="true">
-        <div class="round-stamp"><span>FCFA</span><strong>BOLO</strong><small>2 à 4 joueurs</small></div>
-      </div>
-    </section>
 
-    <section id="homeSection" class="home-actions" data-scr="home">
-      <article class="home-card main">
-        <h2>Créer une partie</h2>
-        <p>Choisis les joueurs, puis joue sur le même écran ou en ligne avec un ami.</p>
-        <button id="createBtn" class="btn primary big" type="button">Créer une partie</button>
-      </article>
-      <article class="home-card">
-        <h2>Rejoindre une partie</h2>
-        <p>Ton ami t’a donné un code à 4 lettres ou un lien ? C’est ici.</p>
-        <button id="joinGoBtn" class="btn secondary big" type="button">Rejoindre une partie</button>
-      </article>
-          <div id="resumeBox" class="resume-box hidden">
-        <div>
-          <p class="eyebrow">PARTIE EN COURS</p>
-          <p id="resumeHint" class="fine">Une sauvegarde attend sur cet appareil.</p>
-        </div>
-        <div class="resume-actions">
-          <button id="resumeBtn" class="btn primary" type="button">Reprendre</button>
-          <button id="discardSaveBtn" class="btn quiet" type="button">Ignorer</button>
-        </div>
-      </div>
-    </section>
+      <ol id="stepRail" class="fb-rail" aria-label="Étapes"></ol>
 
-    <section id="joinSection" class="setup panel wizard" data-scr="join">
-      <header class="wz-head">
-        <button id="backHome2" class="btn mini quiet" type="button">← Accueil</button>
-        <div class="wz-progress"><span id="wzjNo" class="wz-no">Étape 1 sur 3</span><div class="wz-bar"><i id="wzjFill"></i></div></div>
+      <svg class="fb-skyline" viewBox="0 0 600 110" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+        <g fill="currentColor">
+          <rect x="0" y="100" width="600" height="10"/>
+          <rect x="14" y="62" width="22" height="38"/><rect x="40" y="48" width="18" height="52"/>
+          <polygon points="76,100 104,40 132,100"/>
+          <rect x="146" y="54" width="20" height="46"/><rect x="170" y="36" width="16" height="64"/><rect x="190" y="58" width="22" height="42"/>
+          <rect x="236" y="70" width="70" height="30"/><rect x="246" y="62" width="50" height="8"/>
+          <path d="M251 62a25 25 0 0 1 40 0z"/><rect x="269" y="40" width="4" height="12"/><rect x="263" y="44" width="16" height="3"/>
+          <rect x="330" y="30" width="5" height="70"/><rect x="430" y="30" width="5" height="70"/>
+          <path d="M330 34 Q380 88 432 34" fill="none" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M330 34 L342 100M345 34 L354 100M432 34 L420 100M417 34 L408 100" stroke="currentColor" stroke-width="1" fill="none"/>
+          <rect x="330" y="86" width="105" height="4"/>
+          <rect x="462" y="56" width="22" height="44"/><rect x="488" y="44" width="18" height="56"/><rect x="510" y="66" width="24" height="34"/>
+          <path d="M556 100 V74 M556 74 q-14 -4 -22 4 M556 74 q14 -4 22 4 M556 76 q-8 -12 -20 -10 M556 76 q8 -12 20 -10" stroke="currentColor" stroke-width="2.4" fill="none"/>
+        </g>
+      </svg>
+    </aside>
+
+    <section class="flow-main">
+      <header class="flow-top">
+        <a class="ft-logo" href="./" aria-label="BoloPoly"><span class="fb-mark">B</span><span class="fb-word">Bolo<span>Poly</span></span></a>
+        <div class="ft-progress" aria-hidden="true"><span id="ftBar"></span></div>
+        <span id="ftCount" class="ft-count"></span>
+        <button id="rulesBtn" class="ft-rules" type="button">📖 Règles</button>
       </header>
-      <div class="wz-body">
-        <div id="joinForm">
-          <div class="wz-step" data-wzj="code">
-            <p class="wz-eyebrow">REJOINDRE UNE PARTIE</p>
-            <h2 class="wz-title">Quel est le code de la partie ?</h2>
-            <p class="wz-lead">4 lettres, données par ton ami. Si tu as reçu un lien, il remplit le code pour toi.</p>
-            <input id="joinCode" class="code-input" maxlength="4" placeholder="ABCD" autocomplete="off" aria-label="Code de la partie" />
-          </div>
-          <div class="wz-step" data-wzj="me">
-            <p class="wz-eyebrow">TON JOUEUR</p>
-            <h2 class="wz-title">Qui es-tu ?</h2>
-            <label class="name-field"><span>Ton nom</span><input id="joinName" maxlength="14" placeholder="Ton nom" autocomplete="off" /></label>
-            <div id="joinChars" class="char-grid" role="radiogroup" aria-label="Ton personnage"></div>
-            <p id="joinPower" class="char-power"></p>
-            <div id="joinColors" class="color-row" role="radiogroup" aria-label="Ta couleur"></div>
-          </div>
-        </div>
-        <div class="wz-step" data-wzj="wait">
-          <p class="wz-eyebrow">CONNEXION</p>
-          <h2 class="wz-title" id="waitTitle">On te connecte…</h2>
-          <div class="wz-spinner" aria-hidden="true"></div>
-        </div>
-        <p id="joinStatus" class="lobby-status" aria-live="polite"></p>
-      </div>
-      <footer class="wz-foot">
-        <button id="wzjPrev" class="btn quiet" type="button">← Précédent</button>
-        <button id="wzjNext" class="btn primary big" type="button">Continuer →</button>
-        <button id="joinBtn" class="hidden" type="button" tabindex="-1" aria-hidden="true">Rejoindre</button>
-      </footer>
-    </section>
 
-    <section id="setupSection" class="setup panel wizard" data-scr="setup">
-      <header class="wz-head">
-        <button id="backHome" class="btn mini quiet" type="button">← Accueil</button>
-        <div class="wz-progress"><span id="wzNo" class="wz-no">Étape 1 sur 5</span><div class="wz-bar"><i id="wzFill"></i></div></div>
-      </header>
-      <div class="wz-body">
-        <div class="wz-step" data-wz="mode">
-          <p class="wz-eyebrow">NOUVELLE PARTIE</p>
-          <h2 class="wz-title">Comment voulez-vous jouer ?</h2>
-          <div class="wz-cards" role="group" aria-label="Mode de jeu">
-            <button id="modeLocal" type="button" class="choice on"><span class="choice-ic">🖥️</span><strong>Sur cet écran</strong><small>Tout le monde autour du même appareil. Des bots peuvent compléter la table.</small></button>
-            <button id="modeOnline" type="button" class="choice"><span class="choice-ic">🌐</span><strong>En ligne avec un ami</strong><small>Chacun sur son PC. Tu reçois un code à lui donner.</small></button>
+      <div class="flow-stage">
+
+        <!-- Accueil -->
+        <section class="step" data-step="home" aria-labelledby="t-home">
+          <div class="step-head">
+            <p class="step-eyebrow">Bienvenue</p>
+            <h2 id="t-home" tabindex="-1">On joue ?</h2>
+            <p class="step-sub">Une partie se prépare en quelques étapes. Comme à la maison, mais sans le plateau à ranger.</p>
           </div>
-        </div>
-        <div class="wz-step" data-wz="room">
-          <p class="wz-eyebrow">SALLE DE JEU</p>
-          <h2 class="wz-title">Invite ton ami</h2>
-          <div id="lobbyBox" class="lobby hidden">
-            <p class="eyebrow">CODE DE LA PARTIE</p>
-            <div id="lobbyCode" class="lobby-code">····</div>
+          <div id="resumeBox" class="resume-card hidden">
+            <div class="rc-text">
+              <p class="step-eyebrow">Partie en cours</p>
+              <p id="resumeHint" class="rc-hint">Une sauvegarde attend sur cet appareil.</p>
+            </div>
+            <div class="rc-actions">
+              <button id="resumeBtn" class="fbtn primary" type="button">Reprendre</button>
+              <button id="discardSaveBtn" class="fbtn ghost" type="button">Ignorer</button>
+            </div>
+          </div>
+          <div class="home-choices">
+            <button id="createBtn" class="choice big main" type="button">
+              <span class="ch-ico" aria-hidden="true">🎲</span>
+              <span class="ch-txt"><strong>Nouvelle partie</strong><small>Prépare la table : joueurs, personnages, règles.</small></span>
+              <span class="ch-go" aria-hidden="true">→</span>
+            </button>
+            <button id="joinGoBtn" class="choice big" type="button">
+              <span class="ch-ico" aria-hidden="true">🔑</span>
+              <span class="ch-txt"><strong>Rejoindre une partie</strong><small>Ton ami t’a donné un code à 4 lettres.</small></span>
+              <span class="ch-go" aria-hidden="true">→</span>
+            </button>
+            <button id="homeRulesBtn" class="choice" type="button">
+              <span class="ch-ico" aria-hidden="true">📖</span>
+              <span class="ch-txt"><strong>Règles du jeu</strong><small>Tontine, marchandage, transports : deux minutes de lecture.</small></span>
+              <span class="ch-go" aria-hidden="true">→</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Étape : mode de jeu -->
+        <section class="step" data-step="mode" aria-labelledby="t-mode">
+          <div class="step-head">
+            <p class="step-eyebrow">Mode de jeu</p>
+            <h2 id="t-mode" tabindex="-1">Comment voulez-vous jouer ?</h2>
+            <p class="step-sub">Tu pourras toujours ajouter des bots pour compléter la table.</p>
+          </div>
+          <div class="cards2" role="radiogroup" aria-label="Mode de jeu">
+            <button id="modeLocal" class="pick on" type="button" role="radio" aria-checked="true">
+              <span class="pk-ico" aria-hidden="true">🖥️</span>
+              <strong>Sur cet écran</strong>
+              <small>Tout le monde joue sur le même appareil. On se passe la main à chaque tour.</small>
+              <span class="pk-tick" aria-hidden="true">✓</span>
+            </button>
+            <button id="modeOnline" class="pick" type="button" role="radio" aria-checked="false">
+              <span class="pk-ico" aria-hidden="true">🌐</span>
+              <strong>En ligne avec un ami</strong>
+              <small>Chacun sur son écran. Tu reçois un code à 4 lettres à lui envoyer.</small>
+              <span class="pk-tick" aria-hidden="true">✓</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Étape : salon (en ligne, hôte) -->
+        <section class="step" data-step="lobby" aria-labelledby="t-lobby">
+          <div class="step-head">
+            <p class="step-eyebrow">Salon en ligne</p>
+            <h2 id="t-lobby" tabindex="-1">Invite ton ami</h2>
+            <p class="step-sub">Donne-lui ce code, ou envoie-lui le lien. La partie continue dès qu’il arrive.</p>
+          </div>
+          <div id="lobbyBox" class="lobby">
+            <p class="lobby-label">Code de la partie</p>
+            <div id="lobbyCode" class="lobby-code" aria-live="polite">····</div>
             <div class="lobby-actions">
-              <button id="copyCode" class="btn mini secondary" type="button">Copier le code</button>
-              <button id="copyLink" class="btn mini secondary" type="button">Copier le lien</button>
-              <button id="lobbyRetry" class="btn mini primary hidden" type="button">Réessayer</button>
+              <button id="copyCode" class="fbtn soft" type="button">Copier le code</button>
+              <button id="copyLink" class="fbtn soft" type="button">Copier le lien</button>
+              <button id="lobbyRetry" class="fbtn primary hidden" type="button">Réessayer</button>
             </div>
             <p id="lobbyStatus" class="lobby-status" aria-live="polite">Connexion…</p>
           </div>
-        </div>
-        <div class="wz-step" data-wz="rules">
-          <p class="wz-eyebrow">LES RÈGLES</p>
-          <h2 class="wz-title">Combien de joueurs, et jusqu’à quand ?</h2>
-          <p class="wz-label">Joueurs</p>
-          <div id="countPick" class="seg" role="group" aria-label="Nombre de joueurs">
-            <button type="button" data-n="2">2</button><button type="button" data-n="3">3</button><button type="button" data-n="4">4</button>
+          <div id="lobbyGuest" class="guest-chip hidden"></div>
+        </section>
+
+        <!-- Étape : la partie -->
+        <section class="step" data-step="rules" aria-labelledby="t-rules">
+          <div class="step-head">
+            <p class="step-eyebrow">La partie</p>
+            <h2 id="t-rules" tabindex="-1">Combien de joueurs, et jusqu’où ?</h2>
           </div>
-          <select id="playerCount" class="hidden" aria-hidden="true" tabindex="-1"><option value="2">2</option><option value="3">3</option><option value="4">4</option></select>
-          <p class="wz-label">Fin de partie</p>
-          <div class="wz-cards" role="group" aria-label="Fin de partie">
-            <button type="button" class="choice" data-wm="last"><span class="choice-ic">🏁</span><strong>Dernier debout</strong><small>Le dernier joueur solvable gagne.</small></button>
-            <button type="button" class="choice" data-wm="timed"><span class="choice-ic">⏳</span><strong>Durée limitée</strong><small>Après N tours, le plus riche l’emporte.</small></button>
+          <div class="field-block">
+            <p class="fb-label" id="lblCount">Nombre de joueurs</p>
+            <div id="countSeg" class="seg" role="radiogroup" aria-labelledby="lblCount"></div>
           </div>
-          <select id="gameMode" class="hidden" aria-hidden="true" tabindex="-1"><option value="last" selected>Dernier debout</option><option value="timed">Durée limitée</option></select>
-          <label class="count-field hidden" id="roundsField" for="maxRounds">Nombre de tours <input id="maxRounds" type="number" min="5" max="99" value="30" /></label>
-          <p id="modeHint" class="fine"></p>
-        </div>
-        <div class="wz-step" data-wz="seat">
-          <p class="wz-eyebrow" id="seatEyebrow">JOUEUR 1</p>
-          <h2 class="wz-title" id="seatTitle">Qui joue ?</h2>
-          <div id="playerNames" class="player-setup"></div>
-        </div>
-        <div class="wz-step" data-wz="recap">
-          <p class="wz-eyebrow">C’EST PRÊT</p>
-          <h2 class="wz-title">Vérifie ta table</h2>
-          <div id="recap" class="recap"></div>
-          <p id="recapNote" class="lobby-status"></p>
-          <button id="startGameBtn" class="btn primary big" type="button">Lancer la partie</button>
-        </div>
+          <div class="field-block">
+            <p class="fb-label" id="lblEnd">Fin de partie</p>
+            <div class="cards2" role="radiogroup" aria-labelledby="lblEnd">
+              <button id="endLast" class="pick on" type="button" role="radio" aria-checked="true">
+                <span class="pk-ico" aria-hidden="true">🏆</span>
+                <strong>Dernier debout</strong>
+                <small>La partie continue jusqu’à ce qu’un seul joueur ne soit pas en faillite.</small>
+                <span class="pk-tick" aria-hidden="true">✓</span>
+              </button>
+              <button id="endTimed" class="pick" type="button" role="radio" aria-checked="false">
+                <span class="pk-ico" aria-hidden="true">⏳</span>
+                <strong>Durée limitée</strong>
+                <small>Après un nombre de tours fixé, le plus riche (argent et biens) l’emporte.</small>
+                <span class="pk-tick" aria-hidden="true">✓</span>
+              </button>
+            </div>
+          </div>
+          <div id="roundsField" class="field-block hidden">
+            <p class="fb-label" id="lblRounds">Nombre de tours</p>
+            <div class="stepper" role="group" aria-labelledby="lblRounds">
+              <button id="roundsMinus" class="st-btn" type="button" aria-label="Moins de tours">−</button>
+              <output id="roundsVal" class="st-val" aria-live="polite">30</output>
+              <button id="roundsPlus" class="st-btn" type="button" aria-label="Plus de tours">+</button>
+            </div>
+            <p id="modeHint" class="fine-note"></p>
+          </div>
+        </section>
+
+        <!-- Étape : les joueurs -->
+        <section class="step" data-step="seats" aria-labelledby="t-seats">
+          <div class="step-head">
+            <p class="step-eyebrow">Les joueurs</p>
+            <h2 id="t-seats" tabindex="-1">Qui s’assoit à la table ?</h2>
+            <p class="step-sub">Donne un nom à chaque joueur. Un siège peut être confié à un bot.</p>
+          </div>
+          <div id="seatList" class="seat-list"></div>
+        </section>
+
+        <!-- Étape : les personnages -->
+        <section class="step" data-step="heroes" aria-labelledby="t-heroes">
+          <div class="step-head">
+            <p class="step-eyebrow">Les personnages</p>
+            <h2 id="t-heroes" tabindex="-1">Chacun son pouvoir</h2>
+            <p class="step-sub">Un personnage par joueur. Le pouvoir change vraiment ta façon de jouer.</p>
+          </div>
+          <div id="heroTabs" class="hero-tabs" role="tablist" aria-label="Joueurs"></div>
+          <div id="heroPanel" class="hero-panel" role="tabpanel"></div>
+        </section>
+
+        <!-- Étape : récapitulatif -->
+        <section class="step" data-step="recap" aria-labelledby="t-recap">
+          <div class="step-head">
+            <p class="step-eyebrow">Dernière vérification</p>
+            <h2 id="t-recap" tabindex="-1">Tout est prêt ?</h2>
+          </div>
+          <div id="recapRules" class="recap-chips"></div>
+          <div id="recapSeats" class="recap-seats"></div>
+          <p id="recapNote" class="fine-note" aria-live="polite"></p>
+        </section>
+
+        <!-- Rejoindre : code -->
+        <section class="step" data-step="join-code" aria-labelledby="t-jcode">
+          <div class="step-head">
+            <p class="step-eyebrow">Rejoindre une partie</p>
+            <h2 id="t-jcode" tabindex="-1">Quel est le code ?</h2>
+            <p class="step-sub">Quatre lettres, données par l’hôte de la partie.</p>
+          </div>
+          <label class="code-field" for="joinCode">
+            <span class="sr-only">Code de la partie</span>
+            <input id="joinCode" maxlength="4" placeholder="ABCD" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" />
+          </label>
+          <p id="joinStatus" class="lobby-status" aria-live="polite"></p>
+        </section>
+
+        <!-- Rejoindre : profil -->
+        <section class="step" data-step="join-profile" aria-labelledby="t-jprof">
+          <div class="step-head">
+            <p class="step-eyebrow">Rejoindre une partie</p>
+            <h2 id="t-jprof" tabindex="-1">Qui es-tu ?</h2>
+          </div>
+          <div id="joinForm">
+            <label class="text-field"><span>Ton nom</span>
+              <input id="joinName" maxlength="14" placeholder="Ton nom" autocomplete="off" />
+            </label>
+            <p class="fb-label">Ton personnage</p>
+            <div id="joinChars" class="hero-grid" role="radiogroup" aria-label="Ton personnage"></div>
+            <p id="joinPower" class="power-note"></p>
+            <p class="fb-label">Ta couleur</p>
+            <div id="joinColors" class="color-row" role="radiogroup" aria-label="Ta couleur"></div>
+          </div>
+        </section>
+
+        <!-- Rejoindre : attente -->
+        <section class="step" data-step="join-wait" aria-labelledby="t-jwait">
+          <div class="step-head">
+            <p class="step-eyebrow">Rejoindre une partie</p>
+            <h2 id="t-jwait" tabindex="-1">Tu es dans le salon</h2>
+            <p class="step-sub">L’hôte va lancer la partie. Reste sur cette page.</p>
+          </div>
+          <div class="wait-card">
+            <div class="wait-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+            <p id="waitStatus" class="lobby-status" aria-live="polite">Connexion…</p>
+          </div>
+        </section>
+
       </div>
-      <footer class="wz-foot">
-        <button id="wzPrev" class="btn quiet" type="button">← Précédent</button>
-        <button id="wzNext" class="btn primary big" type="button">Continuer →</button>
+
+      <footer class="flow-foot">
+        <button id="flowBack" class="fbtn ghost" type="button">← Retour</button>
+        <span id="flowMsg" class="flow-msg" aria-live="polite"></span>
+        <button id="flowNext" class="fbtn primary" type="button">Continuer →</button>
       </footer>
     </section>
+  </div>
+
+  <!-- ===================== Partie ===================== -->
+  <main class="app-shell">
     <section id="gamePanel" class="game-layout hidden" aria-label="Partie BoloPoly">
       <div class="board-column">
         <div class="board-topline">
-          <div id="roundLabel" class="round-label">TOUR 1</div><span id="clock" class="clock">00:00</span>
+          <div id="roundLabel" class="round-label">TOUR 1</div>
           <span id="modeTag" class="mode-tag">Dernier debout</span>
           <button id="rulesTopBtn" class="btn mini secondary fs-btn" type="button">📖 Règles</button>
           <button id="fsBtn" class="btn mini secondary fs-btn" type="button" aria-pressed="false" title="Agrandir le plateau (touche F)">⛶ Plein écran</button>
@@ -172,11 +283,7 @@
 
       <aside class="game-sidebar">
         <section class="panel turn-panel">
-          <div class="turn-head">
-            <span id="curAvatar" class="avatar">🧺</span>
-            <div><h2 id="curName">Joueur 1</h2><p id="curChar" class="fine"></p></div>
-            <div class="cash"><small>Solde</small><strong id="curCash">1 500 000 <small>F</small></strong></div>
-          </div>
+          <div id="curCard" class="cur-card"></div>
           <p id="curPower" class="power"></p>
           <div class="dice-area">
             <div id="diceOne" class="die">⚀</div><div id="diceTwo" class="die">⚀</div>
@@ -188,27 +295,29 @@
         </section>
 
         <section class="panel players-panel">
-          <div class="section-heading"><h3>Joueurs</h3></div>
           <div id="playersList" class="players-list"></div>
         </section>
 
-        <section id="bankPanel" class="panel bk-panel closed">
-          <button id="bankToggle" class="bk-head" type="button" aria-expanded="false"><span>BANQUE</span><i aria-hidden="true">▾</i></button>
-          <div class="bk-body">
-          <div class="hud-chips">
-            <div><small>Tontine</small><strong id="tontineAmount">0 F</strong></div>
-            <div><small>Banque</small><strong id="bankStock">36 / 36</strong></div>
-          </div>
+        <section class="panel bank-panel">
+          <button type="button" class="fold-head" id="bankHead" aria-expanded="false">
+            <span class="bank-ico" aria-hidden="true">🏦</span>
+            <span class="bank-id"><strong>Banque</strong><small id="bankSub"></small></span>
+            <span class="bank-pot"><small>Tontine</small><b id="bankPot">0 F</b></span>
+            <span class="pr-caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="bank-body">
+            <div class="bk-row"><span>Niveaux de construction</span><strong id="bankStock">36 / 36</strong><div class="bk-bar"><i id="bankBar"></i></div></div>
+            <div class="bk-row"><span>Pot de la tontine</span><strong id="tontineAmount">0 F</strong></div>
+            <div class="bk-row"><span>Terrains à vendre</span><strong id="bankFree">0</strong></div>
           </div>
         </section>
+
         <section class="panel log-panel">
-          <div class="section-heading"><h3>Historique</h3></div>
+          <div class="log-head"><h3>Historique</h3><span id="clock" class="clock">00:00</span></div>
           <ol id="gameLog" class="game-log"></ol>
         </section>
       </aside>
     </section>
-
-    <footer class="footer"><span>BOLOPOLY · v0.6.0</span><span>Les prix, loyers et événements sont fictifs.</span></footer>
   </main>
 
   <nav id="actionBar" class="action-bar hidden" aria-label="Actions">
@@ -218,6 +327,7 @@
     <button type="button" class="ab-btn" data-bar="mortgage" aria-label="Hypothéquer une propriété" title="Hypothéquer"><span class="ab-icon" aria-hidden="true">🏦</span><span class="ab-label">Hypothéquer</span><span class="ab-badge hidden"></span></button>
     <button type="button" class="ab-btn" data-bar="unmortgage" aria-label="Déshypothéquer une propriété" title="Déshypothéquer"><span class="ab-icon" aria-hidden="true">🔓</span><span class="ab-label">Déshypothéquer</span><span class="ab-badge hidden"></span></button>
     <button type="button" class="ab-btn" data-bar="trade" aria-label="Échanger avec un autre joueur" title="Échanger"><span class="ab-icon" aria-hidden="true">🤝</span><span class="ab-label">Échanger</span></button>
+    <div class="ab-brand" aria-hidden="true"><span class="ab-mark">B</span><span class="ab-word">Bolo<span>Poly</span></span></div>
   </nav>
   <div id="actionBanner" class="action-banner hidden" role="status">
     <p id="actionBannerText">Clique sur le terrain</p>
@@ -226,6 +336,5 @@
   <div id="tileConfirm" class="tile-confirm hidden" role="dialog" aria-modal="true"></div>
   <div id="modalRoot" class="modal-root hidden"></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="wizard.js?v=0.6.0" defer></script>
 </body>
 </html>

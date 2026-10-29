@@ -597,13 +597,17 @@ function createBoard() {
   const center = document.createElement('div');
   center.className = 'board-center';
   center.innerHTML = `
-    <div class="center-logo">Bolo<span>Poly</span></div>
-    <div class="center-tag">Marchande. Cotise. Construis.</div>
+    ${SKYLINE}
+    <div class="deck deck-palabre" aria-hidden="true"><span>💬</span><b>Palabre</b></div>
+    <div class="deck deck-coupe" aria-hidden="true"><span>🎉</span><b>Coupé-Décalé</b></div>
+    <div class="center-ribbon" aria-hidden="true">
+      <div class="center-logo">Bolo<span>Poly</span></div>
+      <div class="center-tag">Marchande. Cotise. Construis.</div>
+    </div>
+    <div class="center-now" id="centerNow"></div>
     <div class="center-pot" id="centerPot"></div>
     <div class="center-season" id="centerSeason"></div>
-    <div class="center-now" id="centerNow"></div>
-    <div class="center-deed hidden" id="centerDeed"></div>
-    ${SKYLINE}`;
+    <div class="center-deed hidden" id="centerDeed"></div>`;
   board.appendChild(center);
 }
 
@@ -658,11 +662,6 @@ function renderTurn() {
   const p = curP();
   if (!p) return;
   const c = charOf(p);
-  $('curAvatar').textContent = c.emoji;
-  $('curAvatar').style.setProperty('--pc', p.color);
-  $('curName').textContent = p.name;
-  $('curChar').textContent = c.name;
-  $('curCash').innerHTML = `${fmt(p.cash)} <small>F</small>`;
   $('diceOne').textContent = DICE_FACES[state.dice[0] - 1];
   $('diceTwo').textContent = DICE_FACES[state.dice[1] - 1];
   $('diceTotal').textContent = state.hasRolled || state.doubles ? String(state.dice[0] + state.dice[1]) : '–';
@@ -678,56 +677,57 @@ const uiFold = new Map();
 let foldCur = -1;
 function applyFolds() {
   if (foldCur !== state.cur) { uiFold.clear(); foldCur = state.cur; }
-  document.querySelectorAll('#playersList .player-row').forEach((row) => {
+  document.querySelectorAll('.game-sidebar .player-row').forEach((row) => {
     const pid = Number(row.dataset.pid);
     const open = uiFold.has(pid) ? uiFold.get(pid) : (pid === state.cur && !state.over);
     row.classList.toggle('open', open);
     const h = row.querySelector('.pr-head');
     if (h) h.setAttribute('aria-expanded', String(open));
   });
+  const bh = $('bankHead');
+  if (bh) bh.setAttribute('aria-expanded', String(document.body.classList.contains('bank-open')));
 }
 function toggleFold(pid) {
-  const row = document.querySelector(`#playersList .player-row[data-pid="${pid}"]`);
+  const row = document.querySelector(`.game-sidebar .player-row[data-pid="${pid}"]`);
   uiFold.set(pid, !(row && row.classList.contains('open')));
   applyFolds();
 }
 document.addEventListener('click', (e) => {
   const h = e.target.closest('.pr-head');
-  if (h) toggleFold(Number(h.parentElement.dataset.pid));
+  if (h) { toggleFold(Number(h.parentElement.dataset.pid)); return; }
+  if (e.target.closest('.fold-head')) { document.body.classList.toggle('bank-open'); applyFolds(); }
 });
 
+function playerCardEl(p, idx) {
+  const c = charOf(p);
+  const row = document.createElement('div');
+  row.className = `player-row${idx === state.cur && !state.over ? ' current' : ''}${p.eliminated ? ' eliminated' : ''}`;
+  row.dataset.pid = idx;
+  row.style.setProperty('--pc', p.color);
+  const owned = ownedIdx(p), n = owned.length;
+  const houses = owned.reduce((a, i) => a + (state.props[i].level > 0 && state.props[i].level < 5 ? state.props[i].level : 0), 0);
+  const hotels = owned.filter((i) => state.props[i].level === 5).length;
+  const sub = p.eliminated ? 'En faillite'
+    : `${p.isBot ? '🤖 ' : ''}${c.short} · ${n} bien${n > 1 ? 's' : ''}${p.inJail ? ' · violon' : ''}`;
+  row.innerHTML = `
+    <button type="button" class="pr-head" aria-expanded="false">
+      <span class="player-dot" style="--pc:${p.color}">${c.emoji}</span>
+      <span class="pr-id"><strong>${esc(p.name)}</strong><small>${esc(sub)}</small></span>
+      <span class="player-cash">${money(p.cash)}</span>
+      <span class="pr-caret" aria-hidden="true">▾</span>
+    </button>
+    <div class="pr-body">
+      <div class="set-grid">${Object.keys(GROUPS).map((g) => `<span class="set">${GROUP_INDEX[g].map((i) => `<i class="${state.props[i].owner === p.id ? 'on' : ''}${state.props[i].mortgaged && state.props[i].owner === p.id ? ' mort' : ''}" style="--gc:${GROUPS[g].color}"></i>`).join('')}</span>`).join('')}</div>
+      <p class="pr-line"><span class="pr-fort">Fortune <b>${money(netWorth(p))}</b></span><span title="Niveaux de construction (maisons)">🏠 <b>${houses}</b></span><span title="Grands complexes">🏨 <b>${hotels}</b></span><span title="Lignes de transport">🚐 <b>${networkLines(p)}</b></span>${p.jailCards.length ? `<span title="Sortie du violon">🎫 <b>${p.jailCards.length}</b></span>` : ''}</p>
+    </div>`;
+  return row;
+}
+
 function renderPlayers() {
-  const list = $('playersList');
+  const list = $('playersList'), curBox = $('curCard');
   list.innerHTML = '';
-  state.players.forEach((p, idx) => {
-    const c = charOf(p);
-    const row = document.createElement('div');
-    row.className = `player-row${idx === state.cur && !state.over ? ' current' : ''}${p.eliminated ? ' eliminated' : ''}`;
-    row.dataset.pid = idx;
-    row.style.setProperty('--pc', p.color);
-    const owned = ownedIdx(p), n = owned.length;
-    const houses = owned.reduce((a, i) => a + (state.props[i].level > 0 && state.props[i].level < 5 ? state.props[i].level : 0), 0);
-    const hotels = owned.filter((i) => state.props[i].level === 5).length;
-    row.innerHTML = `
-      <button type="button" class="pr-head" aria-expanded="false">
-        <span class="player-dot" style="--pc:${p.color}">${c.emoji}</span>
-        <span class="pr-id"><strong>${esc(p.name)}</strong>
-          <small>${p.eliminated ? 'En faillite' : `${p.isBot ? `Bot ${(BOT_DIFF[p.diff] || BOT_DIFF.normal).label} · ` : ''}${n} bien${n > 1 ? 's' : ''} · ${networkLines(p)} ligne${networkLines(p) > 1 ? 's' : ''}${p.inJail ? ' · au violon' : ''}`}</small></span>
-        <span class="player-cash">${money(p.cash)}</span>
-        <span class="pr-caret" aria-hidden="true">▾</span>
-      </button>
-      <div class="pr-body">
-        <p class="pr-line"><span>Fortune <b>${money(netWorth(p))}</b></span><span title="Niveaux de construction">🏠 ${houses}</span><span title="Grands complexes">🏨 ${hotels}</span>${p.jailCards.length ? `<span title="Sortie du violon">🎫 ${p.jailCards.length}</span>` : ''}</p>
-      </div>`;
-    const grid = document.createElement('div');
-    grid.className = 'set-grid';
-    Object.keys(GROUPS).forEach((g) => {
-      const cells = GROUP_INDEX[g].map((i) => `<i class="${state.props[i].owner === p.id ? 'on' : ''}" style="--gc:${GROUPS[g].color}"></i>`).join('');
-      grid.insertAdjacentHTML('beforeend', `<span class="set">${cells}</span>`);
-    });
-    row.querySelector('.pr-body').appendChild(grid);
-    list.appendChild(row);
-  });
+  curBox.innerHTML = '';
+  state.players.forEach((p, idx) => (idx === state.cur ? curBox : list).appendChild(playerCardEl(p, idx)));
   applyFolds();
 }
 
@@ -741,6 +741,12 @@ function renderCenter() {
   }
   $('tontineAmount').textContent = money(state.tontine);
   $('bankStock').textContent = `${stockLeft()} / ${CONFIG.buildStock}`;
+  const free = Object.values(state.props).filter((x) => x.owner === null).length;
+  $('bankFree').textContent = String(free);
+  $('bankSub').textContent = `${free} terrain${free > 1 ? 's' : ''} à vendre`;
+  $('bankPot').textContent = money(state.tontine);
+  $('bankBar').style.width = `${Math.max(0, stockLeft() / CONFIG.buildStock) * 100}%`;
+  $('bankBar').style.width = `${Math.max(0, stockLeft()) / CONFIG.buildStock * 100}%`;
   if (!p) return;
   const wait = p.isBot ? 'Le bot joue…' : (state.hasRolled ? 'Fin de tour possible.' : 'À toi de jouer.');
   $('centerNow').innerHTML = state.over ? '<strong>Partie terminée</strong>' : `<strong>${esc(p.name)}</strong>${wait}`;
@@ -1050,6 +1056,15 @@ function tempo() {
 
 async function rollDiceAnimated() {
   const t = tempo();
+  const cp = curP();
+  if (window.Dice3D && Dice3D.supported && cp && !document.hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    try {
+      state.dice = await Dice3D.play({ interactive: false, fast: !!cp.isBot });   // un seul clic sur « Lancer les dés » : les dés partent aussitôt
+      renderTurn();
+      $('diceTotal').textContent = String(state.dice[0] + state.dice[1]);
+      return;
+    } catch (err) { console.warn('Dés 3D indisponibles, animation simple.', err); }
+  }
   for (let k = 0; k < t.spins; k += 1) {
     $('diceOne').textContent = DICE_FACES[rollDie() - 1];
     $('diceTwo').textContent = DICE_FACES[rollDie() - 1];
@@ -1682,69 +1697,9 @@ async function onQuit() {
 /* ============================================================
    Préparation de la partie
    ============================================================ */
-function renderSetup() {
-  normalizeColors();
-  const box = $('playerNames');
-  box.innerHTML = '';
-  for (let i = 0; i < setup.count; i += 1) {
-    const sel = CHARACTERS.find((c) => c.id === setup.chars[i]);
-    const block = document.createElement('div');
-    block.className = 'pl-block';
-    block.style.setProperty('--pc', PLAYER_COLORS[setup.colors[i]]);
-    const bot = setup.kinds[i] === 'bot';
-    block.innerHTML = `
-      <label class="name-field"><span><i class="name-color"></i>Joueur ${i + 1}</span>
-        <input class="name-input" id="playerName${i}" type="text" maxlength="18" autocomplete="off" placeholder="${bot ? 'Nom du bot' : 'Nom du joueur ' + (i + 1)}" value="${esc(setup.names[i])}"></label>
-      <div class="color-row" role="radiogroup" aria-label="Couleur du joueur ${i + 1}">
-        ${PLAYER_COLORS.map((c, k) => {
-          const holder = setup.colors.findIndex((x, j) => x === k && j < setup.count && j !== i);
-          return `<button type="button" class="color-opt${setup.colors[i] === k ? ' on' : ''}${holder >= 0 ? ' taken' : ''}" data-p="${i}" data-col="${k}" style="--c:${c}" role="radio" aria-checked="${setup.colors[i] === k}" aria-label="${COLOR_NAMES[k]}" title="${COLOR_NAMES[k]}${holder >= 0 ? ' (prise par le joueur ' + (holder + 1) + ' : un clic échange)' : ''}"></button>`;
-        }).join('')}
-      </div>
-      <div class="seat-row">
-        <div class="kind-toggle" role="group" aria-label="Humain ou bot">
-          <button type="button" class="${bot ? '' : 'on'}" data-kind="human" data-p="${i}">Humain</button>
-          <button type="button" class="${bot ? 'on' : ''}" data-kind="bot" data-p="${i}">Bot</button>
-        </div>
-        <label class="${bot ? '' : 'hidden'}">Niveau
-          <select data-diff="${i}">
-            ${Object.keys(BOT_DIFF).map((k) => `<option value="${k}" ${setup.diffs[i] === k ? 'selected' : ''}>${BOT_DIFF[k].label}</option>`).join('')}
-          </select>
-        </label>
-      </div>
-      <div class="char-grid" role="radiogroup" aria-label="Personnage du joueur ${i + 1}">
-        ${CHARACTERS.map((c) => `<button type="button" class="char-opt${c.id === sel.id ? ' on' : ''}" data-p="${i}" data-c="${c.id}" role="radio" aria-checked="${c.id === sel.id}"><span>${c.emoji}</span>${c.short}</button>`).join('')}
-      </div>
-      <p class="char-power"><strong>${sel.name}.</strong> ${sel.power}</p>`;
-    box.appendChild(block);
-  }
-  box.querySelectorAll('.name-input').forEach((inp, i) => inp.addEventListener('input', () => { setup.names[i] = inp.value; }));
-  box.querySelectorAll('[data-kind]').forEach((btn) => btn.addEventListener('click', () => {
-    setup.kinds[Number(btn.dataset.p)] = btn.dataset.kind;
-    renderSetup();
-  }));
-  box.querySelectorAll('select[data-diff]').forEach((selEl) => selEl.addEventListener('change', () => {
-    setup.diffs[Number(selEl.dataset.diff)] = selEl.value;
-  }));
-  box.querySelectorAll('.color-opt').forEach((btn) => btn.addEventListener('click', () => {
-    const pi = Number(btn.dataset.p), col = Number(btn.dataset.col);
-    const holder = setup.colors.findIndex((x, k) => x === col && k < setup.count && k !== pi);
-    if (holder >= 0) setup.colors[holder] = setup.colors[pi];
-    setup.colors[pi] = col;
-    renderSetup();
-  }));
-  box.querySelectorAll('.char-opt').forEach((btn) => btn.addEventListener('click', () => {
-    const pi = Number(btn.dataset.p), cid = btn.dataset.c;
-    const holder = setup.chars.findIndex((c, k) => c === cid && k < setup.count && k !== pi);
-    if (holder >= 0) setup.chars[holder] = setup.chars[pi];
-    setup.chars[pi] = cid;
-    renderSetup();
-  }));
-}
+function renderSetup() { if (typeof renderFlow === 'function') renderFlow(); }
 
 function showTable() {
-  $('setupSection').classList.add('hidden');
-  $('heroSection').classList.add('hidden');
   $('gamePanel').classList.remove('hidden');
   $('actionBar').classList.remove('hidden');
   document.body.classList.add('playing');
@@ -1823,7 +1778,6 @@ function resumeGame() {
 }
 
 function returnToSetup() {
-  if (typeof goScreen === 'function') goScreen('setup');
   closeModal();
   hideTileConfirm(true);
   state.actionMode = null;
@@ -1836,9 +1790,7 @@ function returnToSetup() {
   document.body.classList.remove('playing');
   Object.assign(state, { players: [], over: false, busy: false, actionMode: null });
   $('gamePanel').classList.add('hidden');
-  $('setupSection').classList.remove('hidden');
-  $('heroSection').classList.remove('hidden');
-  renderSetup();
+  if (typeof goScreen === 'function') goScreen(FLOW.mode === 'online' && ONLINE.role !== 'host' ? 'mode' : 'recap');
   window.scrollTo({ top: 0 });
 }
 
@@ -1869,19 +1821,6 @@ function showRules() {
 }
 
 /* ---------- Branchements ---------- */
-function syncSetupMode() {
-  const timed = $('gameMode').value === 'timed';
-  setup.winMode = timed ? 'timed' : 'last';
-  setup.maxRounds = Math.max(5, Math.min(99, Number($('maxRounds').value) || CONFIG.defaultMaxRounds));
-  $('roundsField').classList.toggle('hidden', !timed);
-  $('modeHint').textContent = timed
-    ? `Au bout de ${setup.maxRounds} tours, le plus riche (argent + biens) gagne.`
-    : 'Le dernier joueur encore solvable gagne. Choisis « Durée limitée » pour arrêter après N tours.';
-}
-$('playerCount').addEventListener('change', (e) => { setup.count = Number(e.target.value); renderSetup(); });
-$('gameMode').addEventListener('change', syncSetupMode);
-$('maxRounds').addEventListener('input', syncSetupMode);
-$('startGameBtn').addEventListener('click', startGame);
 $('resumeBtn').addEventListener('click', resumeGame);
 $('discardSaveBtn').addEventListener('click', () => { clearSave(); paintResume(); });
 $('rollBtn').addEventListener('click', onRoll);
@@ -1901,8 +1840,6 @@ document.addEventListener('keydown', (e) => {
 $('rulesBtn').addEventListener('click', () => { if (!state.busy || !state.players.length) showRules(); });
 
 window.addEventListener('beforeunload', persist);
-syncSetupMode();
-renderSetup();
 paintResume();
 createBoard();
 
