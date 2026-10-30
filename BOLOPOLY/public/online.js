@@ -1,7 +1,7 @@
 /* BOLOPOLY en ligne — l'hôte fait tourner le jeu, l'invité reçoit l'écran et renvoie ses clics. */
 const ONLINE = { role: null, ws: null, code: null, me: 0, guestId: 1, peer: false, last: {}, strikes: 0, deadline: null, sig: '' };
 const MOVE_SECONDS = window.BOLO_MOVE_SECONDS || 30;
-const ROOTS = { board: '#board', side: '.game-sidebar', bar: '#actionBar', banner: '#actionBanner', modal: '#modalRoot', label: '#roundLabel' };
+const ROOTS = { board: '#board', side: '.game-sidebar', bar: '#actionBar', banner: '#actionBanner', confirm: '#tileConfirm', modal: '#modalRoot', label: '#roundLabel' };
 const rootEl = (k) => document.querySelector(ROOTS[k]);
 window.DiceNetSend = (m) => { if (ONLINE.role === 'host' && ONLINE.peer) wsSend({ t: 'dice', ...m }); };
 const wsSend = (o) => { if (ONLINE.ws && ONLINE.ws.readyState === 1) ONLINE.ws.send(JSON.stringify(o)); };
